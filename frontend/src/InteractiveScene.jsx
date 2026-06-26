@@ -20,6 +20,8 @@ export default function InteractiveScene({ mode, busy, data }) {
 
   const sprites = theme.assets?.sprites || {}
   const anims = theme.assets?.anim || {}
+  const background = theme.assets?.background || null
+  const decor = (theme.assets?.decor || []).filter((d) => d.src)
   const tableSprite = theme.assets?.table || null
   const scrollSprite = theme.assets?.scroll || null
   const showScroll = !!scrollSprite && !!data?.final  // pergamino del veredicto (etapa done)
@@ -35,7 +37,21 @@ export default function InteractiveScene({ mode, busy, data }) {
             {working && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'llmc-pulse 1.3s ease-in-out infinite' }} />}
           </div>
 
-          <div className={`iscene ${working ? 'iscene-working' : ''}`}>
+          <div
+            className={`iscene ${working ? 'iscene-working' : ''}`}
+            style={background ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          >
+            {/* props de ambiente (no interactivos), detrás de mesa y personajes */}
+            {decor.map((d) => (
+              <img
+                key={d.id}
+                className="iscene-decor"
+                src={d.src}
+                alt=""
+                aria-hidden
+                style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%` }}
+              />
+            ))}
             {/* nodo central (mesa / reunión / mostrador). Sprite real si existe. */}
             {tableSprite ? (
               <div className="iscene-center iscene-center-sprite">

@@ -51,6 +51,14 @@ const council = {
     animFrames: 6,
     table: councilAsset('table.png'),
     scroll: councilAsset('scroll.png'),
+    // Ambiente: el fondo es el SALÓN completo (muros, puerta, braseros, suelo
+    // ajedrezado) generado en PixelLab; cubre todo el lienzo. Encima va solo la
+    // alfombra bajo la mesa para no recargar. `brazier/pillar/banner` se generan
+    // también (fetch.sh) como extras opcionales; añádelos aquí si los quieres.
+    background: councilAsset('background.png'),
+    decor: [
+      { id: 'rug', src: councilAsset('rug.png'), x: 50, y: 53, w: 58 },
+    ],
   },
   agents: [
     { id: 'A', kind: 'knight', name: 'Caballero A', tint: '#3b82c4' },

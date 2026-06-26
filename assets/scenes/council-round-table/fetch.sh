@@ -23,14 +23,21 @@ done
 # Objetos de mapa: efímeros (~8 h). Requieren la API key. Si han expirado,
 # regenéralos con el MCP (ver MANIFEST.md) — no es un error fatal.
 if [ -n "${PIXELLAB_API_KEY:-}" ]; then
-  for pair in "table.png:6dfb4b19-d672-471e-87f3-8f089c3a2204" "scroll.png:3444c4b8-95e1-402e-834e-52c38bc9f7d7"; do
+  for pair in \
+    "table.png:6dfb4b19-d672-471e-87f3-8f089c3a2204" \
+    "scroll.png:3444c4b8-95e1-402e-834e-52c38bc9f7d7" \
+    "background.png:ea60b69b-35b0-487c-b45a-cfbdb5ab8a7e" \
+    "rug.png:bdbb3a40-eb5f-4c39-8b23-bec3ce3c4152" \
+    "brazier.png:b60f2881-6f76-4ee7-b1c3-9ffdaee30dd3" \
+    "pillar.png:f571cd98-0345-4028-a05d-79440900ca33" \
+    "banner.png:41700787-f306-4877-98ed-d86c9bd556de"; do
     out="${pair%%:*}"; id="${pair##*:}"
     echo "↓ $out (efímero)"
     curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" \
       -o "$out" "$MCP/map-objects/$id/download" || echo "  (expirado: regenera con create_map_object, ver MANIFEST.md)"
   done
 else
-  echo "PIXELLAB_API_KEY no definida: omito table.png/scroll.png (regenéralos con el MCP)."
+  echo "PIXELLAB_API_KEY no definida: omito los objetos de mapa (table/scroll/background/rug/brazier/pillar/banner; regenéralos con el MCP)."
 fi
 
 # Animaciones: frames south 1..6 → tira horizontal de 6×60px que la escena

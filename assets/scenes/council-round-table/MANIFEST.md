@@ -26,14 +26,29 @@ URL de cada frame:
 
 ## Objetos de mapa (EFÍMEROS — se autoborran ~8 h tras crearse, sobre las 01:17 UTC del 2026-06-27)
 
-| Fichero | object_id | Descargar / regenerar |
-|---------|-----------|------------------------|
-| `table.png`  | `6dfb4b19-d672-471e-87f3-8f089c3a2204` | `https://api.pixellab.ai/mcp/map-objects/<id>/download` |
-| `scroll.png` | `3444c4b8-95e1-402e-834e-52c38bc9f7d7` | id. |
+| Fichero | object_id | Uso en la escena |
+|---------|-----------|------------------|
+| `table.png`  | `6dfb4b19-d672-471e-87f3-8f089c3a2204` | mesa redonda (nodo central) |
+| `scroll.png` | `3444c4b8-95e1-402e-834e-52c38bc9f7d7` | pergamino del veredicto (etapa done) |
+| `background.png` | `ea60b69b-35b0-487c-b45a-cfbdb5ab8a7e` | **salón completo** (muros, puerta, braseros, suelo) — fondo |
+| `rug.png` | `bdbb3a40-eb5f-4c39-8b23-bec3ce3c4152` | alfombra ornamentada bajo la mesa |
+| `brazier.png` | `b60f2881-6f76-4ee7-b1c3-9ffdaee30dd3` | extra opcional (el fondo ya trae braseros) |
+| `pillar.png` | `f571cd98-0345-4028-a05d-79440900ca33` | columna — extra opcional |
+| `banner.png` | `41700787-f306-4877-98ed-d86c9bd556de` | estandarte heráldico — extra opcional |
+
+Descarga: `https://api.pixellab.ai/mcp/map-objects/<id>/download` (con `PIXELLAB_API_KEY`).
+La escena usa por defecto `background.png` (fondo) + `rug.png` + `table.png` + `scroll.png`;
+`brazier/pillar/banner` se bajan también pero solo se pintan si los añades a `decor` en
+`frontend/src/scenes.js`.
 
 Si ya expiraron, regenéralos con el MCP (`create_map_object`):
-- **table.png** — `large round wooden table with a polished gold rim, medieval, empty, retro pixel art, limited palette` · 160×160 · `high top-down`
-- **scroll.png** — `rolled parchment scroll with a red wax seal, medieval verdict, retro pixel art, limited palette` · 64×64 · `high top-down`
+- **table.png** — `large round wooden table with a polished gold rim, medieval, empty…` · 160×160 · `high top-down`
+- **scroll.png** — `rolled parchment scroll with a red wax seal, medieval verdict…` · 64×64 · `high top-down`
+- **background.png** — `medieval great hall stone floor, checkerboard stone tiles, torch-lit, symmetrical…` · 360×240 · `high top-down`, lineless
+- **rug.png** — `large ornate round rug, deep red with gold border pattern, medieval…` · 200×200 · `high top-down`
+- **brazier.png** — `medieval iron brazier bowl with burning orange flames…` · 56×64 · `high top-down`
+- **pillar.png** — `round stone column pillar, medieval…` · 56×88 · `high top-down`
+- **banner.png** — `hanging heraldic banner, teal cloth with gold trim and emblem…` · 72×120 · `side`
 
 ## Animaciones (v3, south, 6 frames de movimiento + 1 de referencia)
 
