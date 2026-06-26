@@ -40,7 +40,7 @@ fi
 declare -A ANIM=(
   [knight-a.talk.png]="c179c5ba-3960-44ac-b9cb-f538dc5f46b0 82b5cb62-748d-4b14-afd0-b13dac426915"
   [knight-b.talk.png]="984599ba-7768-4d67-b859-5c6f38652e99 07a6b012-af04-43d8-b9e7-9d6a37ee2b17"
-  [knight-c.talk.png]="f4d10030-c67b-4645-9918-55e3342645b1 PENDING_C_ANIM_ID"
+  [knight-c.talk.png]="f4d10030-c67b-4645-9918-55e3342645b1 8eb4df6e-cba3-4f01-8f6c-4c3cb9fe24ab"
   [king.synthesize.png]="438e8a36-f8b2-4652-a3c7-0d9c80033e69 9da7306a-c810-41fd-972f-ba820ad99e13"
 )
 if command -v convert >/dev/null 2>&1; then

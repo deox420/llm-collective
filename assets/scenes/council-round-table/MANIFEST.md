@@ -45,7 +45,7 @@ Si ya expiraron, regenéralos con el MCP (`create_map_object`):
 |---------|--------------|---------|-------|
 | `knight-a.talk.png` | `c179c5ba-…` | `82b5cb62-748d-4b14-afd0-b13dac426915` | hablar/gesticular |
 | `knight-b.talk.png` | `984599ba-…` | `07a6b012-af04-43d8-b9e7-9d6a37ee2b17` | hablar/gesticular |
-| `knight-c.talk.png` | `f4d10030-…` | `PENDING_C_ANIM_ID` (en generación; rellena en fetch.sh) | hablar/gesticular |
+| `knight-c.talk.png` | `f4d10030-…` | `8eb4df6e-cba3-4f01-8f6c-4c3cb9fe24ab` | hablar/gesticular |
 | `king.synthesize.png` | `438e8a36-…` | `9da7306a-c810-41fd-972f-ba820ad99e13` | levantarse y alzar la mano |
 
 Requiere **ImageMagick** (`convert`). Sin él, `fetch.sh` omite las tiras y la escena
