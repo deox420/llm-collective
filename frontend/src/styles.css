@@ -40,6 +40,73 @@ html, body { margin: 0; padding: 0; height: 100%; background: #fafafb; }
 [data-composer]:focus-within { border-color: color-mix(in oklab, var(--accent) 50%, var(--line)); }
 button { font-family: inherit; }
 
+/* ── Vista interactiva (placeholder de escena) ────────────────────────── */
+.iscene {
+  position: relative;
+  height: 440px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 90% at 50% 50%, color-mix(in oklab, var(--accent) 9%, var(--surface)) 0%, var(--surface) 70%);
+  overflow: hidden;
+}
+.iscene-center {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 130px; height: 90px; border-radius: 14px;
+  border: 1.5px solid var(--line-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-faint); font-size: 12px;
+  background: var(--surface-2);
+  transition: box-shadow 280ms ease, border-color 280ms ease;
+}
+.iscene-working .iscene-center {
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.iscene-agent {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer; padding: 4px;
+}
+.iscene-fig {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: color-mix(in oklab, var(--tint) 22%, var(--surface));
+  border: 2px solid var(--tint);
+  position: relative; transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+}
+.iscene-fig::after {  /* "cabeza" del placeholder */
+  content: ''; position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--tint);
+}
+.iscene-name { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.iscene-agent:hover .iscene-fig { transform: scale(1.06); }
+
+.pose-idle .iscene-fig { opacity: 0.55; }
+.pose-wait .iscene-fig { opacity: 0.6; }
+.pose-active .iscene-fig,
+.pose-talk .iscene-fig {
+  opacity: 1;
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--tint) 28%, transparent);
+}
+.pose-talk .iscene-fig { animation: llmc-bob 1s ease-in-out infinite; }
+.pose-active .iscene-fig { animation: llmc-pulse 1.6s ease-in-out infinite; }
+.pose-done .iscene-fig { opacity: 1; }
+.pose-dim .iscene-fig { opacity: 0.3; filter: grayscale(0.6); }
+@keyframes llmc-bob { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-5px);} }
+
+.iscene-detail {
+  margin-top: 16px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); overflow: hidden;
+}
+.iscene-detail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.iscene-detail-head button { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 14px; }
+.iscene-detail-body { padding: 14px; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+
+/* ── Accesibilidad: sin animación si el usuario lo pide (NFR-INT-1) ────── */
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

@@ -81,13 +81,13 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 6 — Vista interactiva + assets PixelLab
 
-- [ ] Implementar el contrato `SceneTheme` (`13-interactive-scenes.md` §13.4) en el frontend.
-- [ ] Generar los assets de **Council** (mesa redonda) con PixelLab vía MCP siguiendo `ASSETS.md`.
-- [ ] Cablear los sprites al mapa etapa→pose; reemplazar los placeholders de canvas.
-- [ ] Clic en personaje → detalle real (opinión/código/nota). Respetar `prefers-reduced-motion`.
-- [ ] (Si hay tiempo) escenas de Dev Team (oficina) y Second Brain (biblioteca).
+- [x] Implementar el contrato `SceneTheme` (`13-interactive-scenes.md` §13.4) en el frontend.
+- [ ] **(Bloqueado)** Generar los assets de **Council** (mesa redonda) con PixelLab vía MCP siguiendo `ASSETS.md`. El MCP de PixelLab no está conectado y `api.pixellab.ai` está bloqueado por la política de egress (403). Generar en local/con el MCP disponible.
+- [x] Cablear el mapa etapa→pose (sobre placeholders DOM/CSS con el mismo contrato; sustituir por sprites cuando existan).
+- [x] Clic en personaje → detalle real (opinión/código/nota). Respetar `prefers-reduced-motion`.
+- [x] Escenas de Dev Team (oficina) y Second Brain (biblioteca) (placeholders con el contrato).
 
-**DoD:** la vista interactiva de Council usa sprites reales de PixelLab y refleja las etapas reales; el clic muestra contenido real.
+**DoD:** la vista interactiva de Council refleja las etapas reales y el clic muestra contenido real ✅. _Pendiente: sprites reales de PixelLab (bloqueado por egress/MCP); el render usa placeholders con el mismo `SceneTheme`, así que sustituirlos es solo cambiar `assets`._
 
 ---
 
@@ -239,3 +239,17 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     respuesta cita notas reales (FR-S3/S4), túnel rechaza acceso directo (TC-S5),
     endpoint index+query end-to-end. Verificación visual con Playwright (vault
     sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
+
+- **2026-06-26 · Fase 6 — Vista interactiva · contrato + escenas (placeholders).**
+  - `frontend/src/scenes.js`: implementaciones del contrato `SceneTheme` (§13.4) para
+    los tres modos (Council mesa redonda, Dev Team oficina, Second Brain biblioteca):
+    `layout`, `poseFor` (pose desde la etapa/datos REALES) y `detailFor` (contenido real).
+  - `InteractiveScene.jsx`: render con placeholders DOM/CSS posicionados por el tema;
+    toggle **Chat / Interactiva** en la cabecera; clic en personaje → detalle real
+    (opinión del caballero / síntesis del rey / código del rol / notas). Respeta
+    `prefers-reduced-motion` (NFR-INT-1). Verificado: clic en el Rey muestra la
+    síntesis real del chairman.
+  - **BLOQUEADO:** generar los sprites pixel-art con PixelLab — el MCP no está
+    conectado y `api.pixellab.ai` está bloqueado por egress (403). Como prevé el SDD
+    (§13.5), se usan placeholders con el mismo contrato; sustituirlos por los sprites
+    es solo cambiar `assets`. 63 tests backend siguen verdes; build de frontend verde.

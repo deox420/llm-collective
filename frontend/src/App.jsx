@@ -5,6 +5,7 @@ import {
 } from './theme.js'
 import { ModeBusyError, createConversation, fetchHealth, runBrainQuery, runCouncilQuery, runDevteamTask, runMode } from './api.js'
 import ParticleField from './ParticleField.jsx'
+import InteractiveScene from './InteractiveScene.jsx'
 import { Icon } from './Icons.jsx'
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif"
@@ -13,6 +14,7 @@ const MONO = "'IBM Plex Mono',monospace"
 export default function App() {
   const [mode, setMode] = useState('hub')
   const [theme, setTheme] = useState('light')
+  const [view, setView] = useState('chat') // 'chat' | 'scene'
   const [panelOpen, setPanelOpen] = useState(true)
   const [folders, setFolders] = useState({ council: true, devteam: false, brain: false })
   const [councilTab, setCouncilTab] = useState(0)
@@ -170,12 +172,15 @@ export default function App() {
         <ParticleField accentRGB={accentRGB} working={working} />
         <Header
           mode={mode} panelOpen={panelOpen} onTogglePanel={() => setPanelOpen((p) => !p)}
-          health={health}
+          view={view} onToggleView={setView} health={health}
         />
         {mode === 'hub' && <Hub busy={busy} onSelect={selectMode} />}
-        {mode === 'council' && <CouncilView council={council} error={councilError} busy={busy} tab={councilTab} onTab={setCouncilTab} panelOpen={panelOpen} />}
-        {mode === 'devteam' && <DevTeamView busy={busy} panelOpen={panelOpen} result={devteam} />}
-        {mode === 'brain' && <BrainView busy={busy} panelOpen={panelOpen} result={brain} />}
+        {mode !== 'hub' && view === 'scene' && (
+          <InteractiveScene mode={mode} busy={busy} data={mode === 'council' ? council : mode === 'devteam' ? devteam : brain} />
+        )}
+        {mode === 'council' && view === 'chat' && <CouncilView council={council} error={councilError} busy={busy} tab={councilTab} onTab={setCouncilTab} panelOpen={panelOpen} />}
+        {mode === 'devteam' && view === 'chat' && <DevTeamView busy={busy} panelOpen={panelOpen} result={devteam} />}
+        {mode === 'brain' && view === 'chat' && <BrainView busy={busy} panelOpen={panelOpen} result={brain} />}
         {mode !== 'hub' && (
           <Composer
             mode={mode} value={composer} onChange={setComposer} onSubmit={onSubmit} disabled={!!busy}
@@ -253,8 +258,9 @@ function Sidebar({ mode, folders, busy, histories, theme, onHub, onSelect, onTog
 }
 
 /* ============================ HEADER ============================ */
-function Header({ mode, panelOpen, onTogglePanel, health }) {
+function Header({ mode, panelOpen, onTogglePanel, view, onToggleView, health }) {
   const isHub = mode === 'hub'
+  const tabStyle = (on) => ({ padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12.5, fontWeight: on ? 600 : 500, color: on ? '#fff' : 'var(--text-dim)', background: on ? 'var(--accent)' : 'transparent', transition: 'background 200ms,color 200ms' })
   return (
     <header style={{ height: 54, flex: 'none', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 18px', position: 'relative', zIndex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
@@ -262,6 +268,12 @@ function Header({ mode, panelOpen, onTogglePanel, health }) {
         {!isHub && <span style={{ fontSize: 11.5, color: 'var(--text-faint)', fontFamily: MONO, whiteSpace: 'nowrap' }}>{LANES[mode]}</span>}
       </div>
       <div style={{ flex: 1 }} />
+      {!isHub && (
+        <div role="tablist" aria-label="Vista" style={{ display: 'inline-flex', background: 'var(--surface-2)', borderRadius: 8, padding: 2 }}>
+          <div role="tab" aria-selected={view === 'chat'} style={tabStyle(view === 'chat')} onClick={() => onToggleView('chat')}>Chat</div>
+          <div role="tab" aria-selected={view === 'scene'} style={tabStyle(view === 'scene')} onClick={() => onToggleView('scene')}>Interactiva</div>
+        </div>
+      )}
       {health && <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: MONO }}>perfil: {health.profile}</span>}
       {!isHub && (
         <div onClick={onTogglePanel} title="Panel" data-hover style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', color: panelOpen ? 'var(--accent)' : 'var(--text-faint)' }}>
