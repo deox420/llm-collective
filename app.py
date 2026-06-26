@@ -29,7 +29,12 @@ from shared.concurrency import MODES, ModeBusyError, manager  # noqa: E402
 from shared.health import model_availability  # noqa: E402
 from shared.sse import StageEmitter  # noqa: E402
 
+from projects.council.backend.router import router as council_router  # noqa: E402
+
 app = FastAPI(title="LLM Collective", version="0.0.0")
+
+# Council (Fase 3): endpoints de conversaciones + /api/council/{id}/query (SSE).
+app.include_router(council_router)
 
 # Secuencias de etapas por modo (las reales de cada vertical; aquí solo para la
 # demo del shell). Council/DevTeam/Brain según docs 04/05/06 y api-spec.

@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MODES } from './theme.js'
-import { ModeBusyError, fetchHealth, runMode } from './api.js'
+import {
+  ModeBusyError,
+  createConversation,
+  fetchHealth,
+  runCouncilQuery,
+  runMode,
+} from './api.js'
 import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
 import ChatView from './components/ChatView.jsx'
+import CouncilChatView from './components/CouncilChatView.jsx'
 import InteractiveView from './components/InteractiveView.jsx'
 
 // Espejo de las etapas del backend (app.py DEMO_STAGES) para poder dibujar la
@@ -21,6 +28,9 @@ export default function App() {
   const [histories, setHistories] = useState({ council: [], devteam: [], brain: [] })
   const [notice, setNotice] = useState(null)
   const [health, setHealth] = useState(null)
+  // Resultado en vivo del Council (opiniones/revisión/síntesis) y errores.
+  const [councilResult, setCouncilResult] = useState(null)
+  const [councilError, setCouncilError] = useState(null)
   const busyRef = useRef(null)
   busyRef.current = busy
 
@@ -73,6 +83,47 @@ export default function App() {
     }
   }, [])
 
+  const startCouncil = useCallback(async (question) => {
+    if (busyRef.current) {
+      setNotice(`${MODES[busyRef.current.mode]?.label} está trabajando…`)
+      return
+    }
+    const stages = DEMO_STAGES.council
+    setBusy({ mode: 'council', stages, done: [], current: null })
+    setCouncilResult({ opinions: [], reviews: [], final: null })
+    setCouncilError(null)
+    try {
+      const conv = await createConversation('council')
+      await runCouncilQuery(conv.id, question, {
+        onEvent: ({ event, data }) => {
+          if (event === 'stage:start') setBusy((b) => (b ? { ...b, current: data.stage } : b))
+          else if (event === 'stage:done')
+            setBusy((b) => (b ? { ...b, done: [...b.done, data.stage], current: null } : b))
+          else if (event === 'stage1_opinion')
+            setCouncilResult((r) => ({ ...r, opinions: [...r.opinions, { model: data.model, content: data.content }] }))
+          else if (event === 'stage2_review')
+            setCouncilResult((r) => ({ ...r, reviews: [...r.reviews, data] }))
+          else if (event === 'stage3_final')
+            setCouncilResult((r) => ({ ...r, final: data.content }))
+          else if (event === 'model_error')
+            setCouncilError(`Modelo no disponible (${data.model || data.code}). ¿Acceso a Ollama Cloud?`)
+        },
+      })
+      setHistories((h) => ({
+        ...h,
+        council: [
+          { id: `council-${h.council.length + 1}`, title: question.slice(0, 40), stages },
+          ...h.council,
+        ],
+      }))
+    } catch (e) {
+      if (e instanceof ModeBusyError) setNotice(`${MODES[e.activeMode]?.label || e.activeMode} está trabajando…`)
+      else setCouncilError('No se pudo completar la consulta (¿backend y modelos disponibles?).')
+    } finally {
+      setBusy(null)
+    }
+  }, [])
+
   const ctx = selected === 'hub' ? MODES.hub : MODES[selected]
 
   return (
@@ -101,12 +152,22 @@ export default function App() {
           {selected === 'hub' ? (
             <Hub onEnter={setSelected} busy={busy} />
           ) : view === 'chat' ? (
-            <ChatView
-              mode={selected}
-              history={histories[selected]}
-              busy={busy}
-              onRun={() => startMode(selected)}
-            />
+            selected === 'council' ? (
+              <CouncilChatView
+                busy={busy}
+                result={councilResult}
+                error={councilError}
+                history={histories.council}
+                onAsk={startCouncil}
+              />
+            ) : (
+              <ChatView
+                mode={selected}
+                history={histories[selected]}
+                busy={busy}
+                onRun={() => startMode(selected)}
+              />
+            )
           ) : (
             <InteractiveView mode={selected} busy={busy} onRun={() => startMode(selected)} />
           )}

@@ -183,6 +183,38 @@ body {
 .seg-current .stage-name, .seg-done .stage-name { color: var(--fg); }
 @keyframes shimmer { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
 
+/* ── Council chat view ────────────────────────────────────────────────── */
+.chairman {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-panel));
+  border: 1px solid var(--accent); border-radius: 12px; padding: 16px;
+}
+.chairman-head { font-weight: 700; margin-bottom: 8px; }
+.chairman-body { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+
+.opinions { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+.tabs button {
+  background: transparent; color: var(--fg-dim); border: none; padding: 10px 16px;
+  cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent;
+}
+.tabs button.active { color: var(--fg); border-bottom-color: var(--accent); }
+.tab-body { padding: 14px 16px; }
+.tab-model { font-size: 11px; color: var(--fg-dim); margin-bottom: 6px; font-family: ui-monospace, monospace; }
+.tab-body p { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+
+.reviews { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.reviews-head { font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+.reviews ul { margin: 0; padding-left: 18px; }
+.reviews li { font-size: 13px; color: var(--fg-dim); margin: 4px 0; }
+.reviewer { color: var(--accent); font-weight: 600; }
+
+.council-composer { display: flex; gap: 8px; }
+.council-composer input {
+  flex: 1; background: var(--bg-panel); border: 1px solid var(--border);
+  color: var(--fg); border-radius: 10px; padding: 11px 14px; font-size: 14px;
+}
+.council-composer input:focus { outline: none; border-color: var(--accent); }
+
 /* ── Interactive scene (placeholder Fase 2) ───────────────────────────── */
 .scene { position: relative; max-width: 820px; margin: 0 auto; }
 .scene-stage {
