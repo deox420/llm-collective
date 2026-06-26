@@ -52,6 +52,11 @@ Por orden:
 - **Orquestación Dev Team:** LangGraph (ADR-0005).
 - **Pixel-art:** assets de PixelLab vía su MCP (ver `ASSETS.md`). Hasta tenerlos, placeholders de canvas con el mismo contrato.
 
+### Reparto de herramientas de diseño (no confundir)
+- **Claude Design** → diseño de la **UI** (shell, sidebar, vista chat, paneles, paletas, transiciones de color por modo). A partir de `prompts/claude-design-prompt.md`.
+- **PixelLab (vía MCP)** → **escenarios, personajes y animaciones** de la vista interactiva (Council/Dev Team/Second Brain). A partir de `ASSETS.md` (ADR-0007).
+- Claude Design **no** genera los assets pixel-art finales; solo una prueba desechable de la escena de Council. El componente de escena que consume los assets (contrato `SceneTheme`) lo implementas tú (Claude Code) en la Fase 6. Detalle en `docs/13-interactive-scenes.md` §13.1-bis.
+
 ## Estructura del repo
 
 ```

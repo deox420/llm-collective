@@ -1,6 +1,6 @@
 # 13 · Vista interactiva y escenarios temáticos
 
-**Versión:** 1.0 · **Estado:** Borrador · **Fecha:** 2026-06-26
+**Versión:** 1.1 · **Estado:** Borrador · **Fecha:** 2026-06-26
 **Depende de:** [12 · Frontend](12-frontend.md), [04 Council](04-council.md), [05 Dev Team](05-dev-team.md), [06 Second Brain](06-second-brain.md)
 
 ---
@@ -15,6 +15,19 @@ Cada modo ofrece **dos vistas** de la misma sesión, intercambiables con un bot�
 | **Interactiva** | Ver a los agentes trabajar | Escenario temático pixel-art donde personajes-agente actúan según el estado real del pipeline |
 
 La vista interactiva **no sustituye** la lógica: es una capa de presentación sobre el mismo estado de sesión. La lógica (qué agentes hay, qué etapas recorren) es fija; el **decorado** encima es un tema reemplazable.
+
+---
+
+## 13.1-bis Reparto de herramientas de diseño
+
+Para evitar ambigüedad, así se reparten las herramientas:
+
+| Parte | Herramienta | Qué produce |
+|-------|-------------|-------------|
+| **UI / interfaz** (shell, sidebar, vista chat, paneles, layout, paletas, transiciones de color por modo) | **Claude Design** | El diseño visual de la aplicación, a partir de [prompts/claude-design-prompt.md](../prompts/claude-design-prompt.md). |
+| **Vista interactiva: escenarios, personajes y animaciones** (mesa redonda, oficina, biblioteca; caballeros/rey/agentes/bibliotecario; sus estados idle/talk/waiting/handoff…) | **PixelLab** (vía su MCP) | Los assets pixel-art: fondos de escena, spritesheets de personajes y sus animaciones. Ver [§13.5](#135-pipeline-de-assets-pixel-art-pixellab), [ASSETS.md](../../ASSETS.md) y [ADR-0007](adr/0007-pixellab-assets.md). |
+
+Matiz importante: **Claude Design NO genera los assets pixel-art finales.** Solo se usa, de forma opcional y desechable, para una *prueba de interpretación* de la escena de Council (ver [§13.6](#136-versión-de-prueba-con-claude-design)); el render final de toda la parte interactiva lo hacen los assets de PixelLab. El componente de escena (código React que consume esos assets según el contrato `SceneTheme`, [§13.4](#134-sistema-de-escenarios-intercambiables)) lo implementa Claude Code en la Fase 6.
 
 ---
 
