@@ -251,6 +251,11 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     el pergamino al llegar al veredicto (`data.final`); CSS `.iscene-sprite/-scroll`
     con poses idle/active/talk/done y `image-rendering: pixelated`; `vite.config`
     permite importar assets desde la raíz (`fs.allow`). Build verde (37 módulos).
+  - **Animaciones (v3, south, 6 frames):** generadas las 4 — `talk` de cada
+    caballero y `synthesize` del rey (alzar la mano). La escena reproduce la tira
+    con `steps(6)` en poses talk/active y cae al sprite estático si no está;
+    `prefers-reduced-motion` la congela. `fetch.sh` ensambla las tiras de 6×60px
+    con ImageMagick; IDs en `MANIFEST.md`.
   - **BLOQUEADO la descarga de los PNG:** los hosts de PixelLab
     (`api.pixellab.ai`, `backblaze.pixellab.ai`) están bloqueados por la política de
     egress del entorno (403). El MCP genera y muestra preview, pero no hay forma de
