@@ -19,6 +19,7 @@ export default function InteractiveScene({ mode, busy, data }) {
   const detail = selected ? theme.detailFor(selected, data) : null
 
   const sprites = theme.assets?.sprites || {}
+  const anims = theme.assets?.anim || {}
   const tableSprite = theme.assets?.table || null
   const scrollSprite = theme.assets?.scroll || null
   const showScroll = !!scrollSprite && !!data?.final  // pergamino del veredicto (etapa done)
@@ -51,6 +52,10 @@ export default function InteractiveScene({ mode, busy, data }) {
               const pos = placements[a.id]
               const pose = theme.poseFor(a.id, ctx)
               const sprite = sprites[a.id]
+              const anim = anims[a.id]
+              // Reproduce la animación solo cuando el agente actúa de verdad
+              // (pose talk/active) y existe el spritesheet; si no, sprite estático.
+              const playing = anim && (pose === 'talk' || pose === 'active')
               return (
                 <button
                   key={a.id}
@@ -59,9 +64,11 @@ export default function InteractiveScene({ mode, busy, data }) {
                   onClick={() => setSelected(a.id)}
                   title={`${a.name} — clic para ver detalle`}
                 >
-                  {sprite
-                    ? <img className="iscene-sprite" src={sprite} alt={a.name} aria-hidden />
-                    : <span className="iscene-fig" aria-hidden />}
+                  {playing
+                    ? <span className="iscene-anim" style={{ backgroundImage: `url(${anim})` }} aria-hidden />
+                    : sprite
+                      ? <img className="iscene-sprite" src={sprite} alt={a.name} aria-hidden />
+                      : <span className="iscene-fig" aria-hidden />}
                   <span className="iscene-name">{a.name}</span>
                 </button>
               )

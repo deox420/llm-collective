@@ -100,6 +100,18 @@ button { font-family: inherit; }
 .pose-done .iscene-sprite { opacity: 1; }
 .pose-dim .iscene-sprite { opacity: 0.3; filter: grayscale(0.6); }
 
+/* Spritesheet de animación: tira horizontal de 6 frames de 60px (la arma fetch.sh).
+   Reproducida con steps(6) en poses activas. background-size auto = tira nativa. */
+.iscene-anim {
+  display: block; width: 60px; height: 60px;
+  background-repeat: no-repeat; background-position: 0 0;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--tint) 75%, transparent));
+  animation: iscene-play6 0.8s steps(6) infinite;
+}
+@keyframes iscene-play6 { from { background-position: 0 0; } to { background-position: -360px 0; } }
+.iscene-agent:hover .iscene-anim { transform: scale(1.08); }
+
 /* Centro de la escena cuando hay sprite de mesa (Council) */
 .iscene-center-sprite {
   width: 150px; height: 110px; border: none; background: none;

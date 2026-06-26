@@ -39,6 +39,16 @@ const council = {
       C: councilAsset('knight-c.png'),
       king: councilAsset('king.png'),
     },
+    // Spritesheets de animación (tira horizontal, 6 frames de 60px). Si existen,
+    // se reproducen en las poses activas (talk/active); si no, sprite estático.
+    // Las genera fetch.sh ensamblando los frames de PixelLab (ver MANIFEST.md).
+    anim: {
+      A: councilAsset('knight-a.talk.png'),
+      B: councilAsset('knight-b.talk.png'),
+      C: councilAsset('knight-c.talk.png'),
+      king: councilAsset('king.synthesize.png'),
+    },
+    animFrames: 6,
     table: councilAsset('table.png'),
     scroll: councilAsset('scroll.png'),
   },
