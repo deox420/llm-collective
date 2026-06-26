@@ -256,6 +256,17 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     con `steps(6)` en poses talk/active y cae al sprite estático si no está;
     `prefers-reduced-motion` la congela. `fetch.sh` ensambla las tiras de 6×60px
     con ImageMagick; IDs en `MANIFEST.md`.
+  - **Ambiente de Council:** fondo del salón completo (muros, puerta, braseros,
+    suelo ajedrezado) + alfombra bajo la mesa; props extra (brasero/columna/
+    estandarte) generados como opcionales. Contrato de escena extendido con
+    `assets.background` + `assets.decor` (sin romperlo); `InteractiveScene` pinta
+    fondo y props detrás de mesa/personajes.
+  - **Escenas 2 y 3 generadas y cableadas:** Dev Team (oficina: 4 devs +
+    fondo de oficina + máquina de café) y Second Brain (biblioteca: bibliotecario
+    + fondo de biblioteca + pila de libros + vela). `scenes.js` carga cada carpeta
+    con su glob tolerante; `InteractiveScene` ya es genérico (fondo/decor/sprites).
+    Cada escena tiene su `assets/scenes/<id>/MANIFEST.md` + `fetch.sh`. Build verde.
+    Misma limitación: la descarga de bytes sigue bloqueada por egress.
   - **BLOQUEADO la descarga de los PNG:** los hosts de PixelLab
     (`api.pixellab.ai`, `backblaze.pixellab.ai`) están bloqueados por la política de
     egress del entorno (403). El MCP genera y muestra preview, pero no hay forma de

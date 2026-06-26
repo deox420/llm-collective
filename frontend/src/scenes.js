@@ -20,10 +20,21 @@ const councilFiles = import.meta.glob(
   '../../assets/scenes/council-round-table/*.png',
   { eager: true, query: '?url', import: 'default' }
 )
-function councilAsset(name) {
-  const hit = Object.entries(councilFiles).find(([p]) => p.endsWith('/' + name))
+const devteamFiles = import.meta.glob(
+  '../../assets/scenes/devteam-office/*.png',
+  { eager: true, query: '?url', import: 'default' }
+)
+const brainFiles = import.meta.glob(
+  '../../assets/scenes/brain-library/*.png',
+  { eager: true, query: '?url', import: 'default' }
+)
+function pick(files, name) {
+  const hit = Object.entries(files).find(([p]) => p.endsWith('/' + name))
   return hit ? hit[1] : null
 }
+function councilAsset(name) { return pick(councilFiles, name) }
+function devteamAsset(name) { return pick(devteamFiles, name) }
+function brainAsset(name) { return pick(brainFiles, name) }
 
 // ---- Council: mesa redonda (3 caballeros A/B/C + rey chairman) -------------
 const council = {
@@ -104,6 +115,18 @@ const devteam = {
   mode: 'devteam',
   label: 'La oficina',
   centerLabel: 'Reunión',
+  assets: {
+    sprites: {
+      architect: devteamAsset('architect.png'),
+      programmer: devteamAsset('programmer.png'),
+      reviewer: devteamAsset('reviewer.png'),
+      tester: devteamAsset('tester.png'),
+    },
+    background: devteamAsset('background.png'),
+    decor: [
+      { id: 'coffee', src: devteamAsset('coffee.png'), x: 90, y: 84, w: 10 },
+    ],
+  },
   agents: [
     { id: 'architect', kind: 'dev', name: 'Arquitecto', tint: '#3b82c4' },
     { id: 'programmer', kind: 'dev', name: 'Programador', tint: '#e0673c' },
@@ -140,6 +163,14 @@ const brain = {
   mode: 'brain',
   label: 'La biblioteca',
   centerLabel: 'Mostrador',
+  assets: {
+    sprites: { librarian: brainAsset('librarian.png') },
+    background: brainAsset('background.png'),
+    decor: [
+      { id: 'books', src: brainAsset('books.png'), x: 28, y: 72, w: 12 },
+      { id: 'candle', src: brainAsset('candle.png'), x: 72, y: 34, w: 7 },
+    ],
+  },
   agents: [
     { id: 'librarian', kind: 'librarian', name: 'Bibliotecario', tint: '#8156d6' },
   ],
