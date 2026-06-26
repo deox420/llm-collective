@@ -18,8 +18,12 @@ import os
 import sys
 
 import httpx
+from dotenv import load_dotenv
 
 from shared import model_config
+
+# Carga .env para que la utilidad CLI vea OLLAMA_CLOUD_API_KEY igual que el backend.
+load_dotenv()
 
 
 def _profile_cloud_models(profile_name: str) -> list[str]:

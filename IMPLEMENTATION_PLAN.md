@@ -24,7 +24,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 - [x] Implementar el **gestor de concurrencia global**: un único modo activo a la vez; los demás bloqueados (FR de concurrencia, `12-frontend.md`). _(Diverge de SDD §12.4; registrado en ADR-0008.)_
 - [x] Implementar el **emisor de eventos SSE de etapas** reutilizable por los tres modos (contrato en `13-interactive-scenes.md` §13.2 y `specs/api-spec.md`).
 - [x] Modelo de configuración (qué modelo va a cada rol) leído de `shared/model_config.py` vía `MODEL_PROFILE`, no hardcodeado. Las apps importan `COUNCIL_MODELS`, `CHAIRMAN_MODEL`, `DEVTEAM_ROLES`, `EMBEDDINGS_MODEL` de ahí.
-- [ ] **(Bloqueado)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. Requiere `OLLAMA_CLOUD_API_KEY` en `.env`.
+- [ ] **(Bloqueado)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. Clave ya configurada, pero **la política de egress de este entorno remoto bloquea `ollama.com` (403)**. Ejecutar en local o añadir `ollama.com` al allowlist del entorno.
 
 **DoD:** tests del router pasan; un test demuestra que iniciar un segundo modo mientras otro corre devuelve "bloqueado"; los eventos SSE se emiten en orden de etapa.
 
@@ -145,5 +145,7 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
   - Tests: **30 verdes** (`uv run pytest`). DoD de Fase 1 cumplido (router, bloqueo de
     2º modo, SSE en orden).
   - **BLOQUEADO:** verificación de que los nombres de modelo del perfil existen en la
-    cuenta de Ollama Cloud. Herramienta lista (`shared/verify_models.py`) pero requiere
-    `OLLAMA_CLOUD_API_KEY` en `.env`. **Falta la clave del usuario.**
+    cuenta de Ollama Cloud. Herramienta lista (`shared/verify_models.py`) y clave ya en
+    `.env`, pero **la política de egress del entorno remoto bloquea `ollama.com` (403
+    del proxy)**. No se puede sortear (instrucción del proxy). Resolver ejecutando la
+    utilidad en local o añadiendo `ollama.com` al allowlist del entorno.
