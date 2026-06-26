@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="620" viewBox="0 0 680 620" font-family="sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="620" fill="white"/>
+<rect x="250" y="30" width="180" height="50" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="340" y="50" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Tarea del usuario</text><text x="340" y="68" text-anchor="middle" font-size="12" fill="#5F5E5A">"Construye X"</text>
+<line x1="340" y1="80" x2="340" y2="106" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="220" y="106" width="240" height="58" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1"/><text x="340" y="128" text-anchor="middle" font-size="14" font-weight="500" fill="#4A1B0C">Arquitecto / lider / GPU</text><text x="340" y="147" text-anchor="middle" font-size="12" fill="#993C1D">Disena y descompone</text>
+<line x1="340" y1="164" x2="340" y2="190" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="220" y="190" width="240" height="58" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="340" y="212" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Programador / Cloud</text><text x="340" y="231" text-anchor="middle" font-size="12" fill="#0F6E56">Escribe el codigo</text>
+<line x1="340" y1="248" x2="340" y2="274" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="220" y="274" width="240" height="58" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="340" y="296" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Revisor / Cloud</text><text x="340" y="315" text-anchor="middle" font-size="12" fill="#0F6E56">Busca bugs y fallos</text>
+<line x1="340" y1="332" x2="340" y2="358" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="220" y="358" width="240" height="58" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="340" y="380" text-anchor="middle" font-size="14" font-weight="500" fill="#26215C">Tester / ejecutor</text><text x="340" y="399" text-anchor="middle" font-size="12" fill="#534AB7">Corre tests reales</text>
+<path d="M460 387 L560 387 L560 219 L462 219" fill="none" stroke="#D85A30" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="572" y="303" font-size="12" fill="#993C1D">Si falla,</text><text x="572" y="319" font-size="12" fill="#993C1D">vuelve al</text><text x="572" y="335" font-size="12" fill="#993C1D">programador</text>
+<line x1="340" y1="416" x2="340" y2="442" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="250" y="442" width="180" height="50" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="340" y="462" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Entrega final</text><text x="340" y="480" text-anchor="middle" font-size="12" fill="#5F5E5A">Codigo + tests OK</text>
+<rect x="40" y="190" width="150" height="226" rx="12" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text x="115" y="216" text-anchor="middle" font-size="14" font-weight="500" fill="#412402">Herramientas</text>
+<text x="115" y="250" text-anchor="middle" font-size="12" fill="#854F0B">Sistema ficheros</text>
+<text x="115" y="302" text-anchor="middle" font-size="12" fill="#854F0B">Terminal / shell</text>
+<text x="115" y="354" text-anchor="middle" font-size="12" fill="#854F0B">Git</text>
+<text x="115" y="388" text-anchor="middle" font-size="12" fill="#854F0B">Runner tests</text>
+<line x1="220" y1="219" x2="192" y2="219" stroke="#BA7517" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="220" y1="387" x2="192" y2="387" stroke="#BA7517" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="40" y="520" width="600" height="82" rx="8" fill="none" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="60" y="542" font-size="12" fill="#5F5E5A">Coral = arquitecto/lider en GPU alquilada (el cerebro del equipo)</text>
+<text x="60" y="562" font-size="12" fill="#5F5E5A">Teal = programador y revisor en Ollama Cloud. Purpura = tester ejecutor</text>
+<text x="60" y="582" font-size="12" fill="#5F5E5A">Ambar = herramientas reales con efectos en disco (sandbox Docker)</text>
+<text x="60" y="598" font-size="12" fill="#5F5E5A">El bucle de correccion distingue un equipo de un consejo</text>
+</svg>

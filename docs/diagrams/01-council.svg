@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="600" viewBox="0 0 680 600" font-family="sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="600" fill="white"/>
+<rect x="250" y="30" width="180" height="50" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="340" y="50" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Frontend (React)</text><text x="340" y="68" text-anchor="middle" font-size="12" fill="#5F5E5A">Chat + tabs por modelo</text>
+<line x1="340" y1="80" x2="340" y2="106" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="230" y="108" width="220" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="340" y="130" text-anchor="middle" font-size="14" font-weight="500" fill="#26215C">Orquestador FastAPI</text><text x="340" y="148" text-anchor="middle" font-size="12" fill="#534AB7">Reparte y enruta async</text>
+<text x="340" y="186" text-anchor="middle" font-size="12" fill="#5F5E5A">Etapa 1: opiniones en paralelo</text>
+<line x1="300" y1="164" x2="150" y2="210" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="340" y1="164" x2="340" y2="210" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="380" y1="164" x2="530" y2="210" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="60" y="210" width="170" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="145" y="232" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Agente 1 / Cloud</text><text x="145" y="250" text-anchor="middle" font-size="12" fill="#0F6E56">Ollama Cloud</text>
+<rect x="255" y="210" width="170" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="340" y="232" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Agente 2 / Cloud</text><text x="340" y="250" text-anchor="middle" font-size="12" fill="#0F6E56">Ollama Cloud</text>
+<rect x="450" y="210" width="170" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="535" y="232" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Agente 3 / Cloud</text><text x="535" y="250" text-anchor="middle" font-size="12" fill="#0F6E56">Ollama Cloud</text>
+<text x="340" y="302" text-anchor="middle" font-size="12" fill="#5F5E5A">Etapa 2: cada agente revisa y rankea a los otros (anonimo)</text>
+<line x1="145" y1="266" x2="290" y2="340" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="340" y1="266" x2="340" y2="340" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="535" y1="266" x2="390" y2="340" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="200" y="340" width="280" height="64" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/><text x="340" y="364" text-anchor="middle" font-size="14" font-weight="500" fill="#4A1B0C">Chairman / servidor GPU alquilado</text><text x="340" y="384" text-anchor="middle" font-size="12" fill="#993C1D">Etapa 3: sintetiza la respuesta final</text>
+<line x1="340" y1="404" x2="340" y2="432" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="250" y="432" width="180" height="50" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="340" y="452" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Respuesta final</text><text x="340" y="470" text-anchor="middle" font-size="12" fill="#5F5E5A">+ tabs inspeccionables</text>
+<rect x="60" y="510" width="560" height="66" rx="8" fill="none" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="80" y="532" font-size="12" fill="#5F5E5A">Teal = agentes en Ollama Cloud (3 concurrentes en plan Pro)</text>
+<text x="80" y="552" font-size="12" fill="#5F5E5A">Coral = chairman dedicado en GPU alquilada. Purpura = orquestacion</text>
+<text x="80" y="570" font-size="12" fill="#5F5E5A">Gris = capa de interfaz</text>
+</svg>

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "pixellab": {
+      "command": "npx",
+      "args": [
+        "mcp-remote@latest",
+        "https://api.pixellab.ai/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${AUTH_HEADER}"
+      ],
+      "env": {
+        "AUTH_HEADER": "Bearer TU_PIXELLAB_API_KEY"
+      }
+    }
+  }
+}
