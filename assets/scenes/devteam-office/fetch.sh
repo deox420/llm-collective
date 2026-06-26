@@ -12,7 +12,7 @@ declare -A CHARS=(
   [architect.png]=64f48626-75fd-43ad-9683-f9c27a22478a
   [programmer.png]=0860e96b-10e8-43b5-9372-052c65098bd3
   [reviewer.png]=4e0556aa-e619-48e7-b3ad-94a5ef7d0572
-  [tester.png]=fcf4b2e0-5474-4803-9199-ec70af795e0a
+  [tester.png]=67a2aa81-9298-45f3-a782-cb81aa061634
 )
 for out in "${!CHARS[@]}"; do
   echo "↓ $out"
