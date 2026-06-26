@@ -1,0 +1,45 @@
+[project]
+name = "llm-collective"
+version = "0.0.0"
+description = "Plataforma local-first que orquesta varios LLMs sobre un núcleo común (Council, Dev Team, Second Brain)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+]
+
+# Extras pesados que cada vertical necesita en su fase. Se declaran aquí para que
+# sean trazables al IMPLEMENTATION_PLAN, pero no se instalan hasta su fase para
+# mantener el entorno de Fase 0/1 ligero.
+#   uv sync --extra devteam      -> Fase 4
+#   uv sync --extra secondbrain  -> Fase 5
+[project.optional-dependencies]
+devteam = [
+    "langgraph>=0.2",
+]
+secondbrain = [
+    "chromadb>=0.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.setuptools]
+# Paquete del núcleo común. Las apps viven bajo projects/.
+packages = ["shared"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

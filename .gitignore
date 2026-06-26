@@ -1,0 +1,15 @@
+.env
+data/
+__pycache__/
+*.pyc
+*.egg-info/
+node_modules/
+.venv/
+dist/
+*.log
+chroma/
+*.lance
+.mcp.local.json
+*.tmp.png
+claude-desktop-mcp.local.json
+.env.local

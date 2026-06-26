@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="660" viewBox="0 0 680 660" font-family="sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="660" fill="white"/>
+<text x="60" y="34" font-size="14" font-weight="500" fill="#173404">Indexado (offline, al cambiar notas)</text>
+<rect x="40" y="48" width="600" height="92" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+<rect x="60" y="72" width="150" height="48" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="135" y="90" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Vault Obsidian</text><text x="135" y="108" text-anchor="middle" font-size="12" fill="#5F5E5A">Notas .md</text>
+<line x1="210" y1="96" x2="248" y2="96" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="248" y="72" width="160" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="328" y="90" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Embeddings</text><text x="328" y="108" text-anchor="middle" font-size="12" fill="#0F6E56">nomic-embed local</text>
+<line x1="408" y1="96" x2="446" y2="96" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="446" y="72" width="174" height="48" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="533" y="90" text-anchor="middle" font-size="14" font-weight="500" fill="#26215C">Base vectorial</text><text x="533" y="108" text-anchor="middle" font-size="12" fill="#534AB7">Chroma / LanceDB</text>
+<text x="60" y="184" font-size="14" font-weight="500" fill="#26215C">Consulta (online, cada pregunta)</text>
+<rect x="60" y="200" width="170" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="145" y="222" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Tu (movil / web)</text><text x="145" y="240" text-anchor="middle" font-size="12" fill="#5F5E5A">Pregunta</text>
+<line x1="230" y1="228" x2="268" y2="228" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="268" y="200" width="160" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/><text x="348" y="222" text-anchor="middle" font-size="14" font-weight="500" fill="#412402">Tunel seguro</text><text x="348" y="240" text-anchor="middle" font-size="12" fill="#854F0B">Tailscale / CF</text>
+<line x1="428" y1="228" x2="466" y2="228" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="466" y="200" width="160" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="546" y="222" text-anchor="middle" font-size="14" font-weight="500" fill="#26215C">Orquestador</text><text x="546" y="240" text-anchor="middle" font-size="12" fill="#534AB7">FastAPI</text>
+<text x="546" y="290" text-anchor="middle" font-size="12" fill="#534AB7">1. Recupera notas relevantes</text>
+<path d="M546 256 L546 300 L533 300 L533 124" fill="none" stroke="#534AB7" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="466" y1="240" x2="240" y2="340" stroke="#534AB7" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="300" y="318" text-anchor="middle" font-size="12" fill="#534AB7">2. Notas + pregunta</text>
+<rect x="180" y="340" width="320" height="64" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1"/><text x="340" y="364" text-anchor="middle" font-size="14" font-weight="500" fill="#4A1B0C">Chairman / servidor GPU alquilado</text><text x="340" y="384" text-anchor="middle" font-size="12" fill="#993C1D">3. Responde basandose en tus notas</text>
+<line x1="340" y1="404" x2="340" y2="430" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="230" y="430" width="220" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/><text x="340" y="452" text-anchor="middle" font-size="14" font-weight="500" fill="#2C2C2A">Respuesta + citas</text><text x="340" y="470" text-anchor="middle" font-size="12" fill="#5F5E5A">Enlaza a tus notas</text>
+<rect x="40" y="430" width="160" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="120" y="452" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">Agentes cloud</text><text x="120" y="470" text-anchor="middle" font-size="12" fill="#0F6E56">Opcional, 3 max</text>
+<line x1="200" y1="430" x2="240" y2="404" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+<rect x="40" y="514" width="600" height="106" rx="8" fill="none" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="60" y="536" font-size="12" fill="#5F5E5A">Verde = pipeline de indexado (corre cuando cambian las notas)</text>
+<text x="60" y="556" font-size="12" fill="#5F5E5A">Coral = chairman en GPU alquilada. Purpura = base vectorial + orquestacion</text>
+<text x="60" y="576" font-size="12" fill="#5F5E5A">Ambar = tunel seguro: accedes en remoto sin abrir tu maquina al mundo</text>
+<text x="60" y="596" font-size="12" fill="#5F5E5A">Teal punteado = agentes cloud opcionales (mini-council sobre las notas)</text>
+<text x="60" y="612" font-size="12" fill="#5F5E5A">Chairman + base en la misma GPU => tus notas no salen de ahi</text>
+</svg>
