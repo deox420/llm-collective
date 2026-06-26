@@ -9,7 +9,10 @@ import asyncio
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# Tope de longitud de entrada de usuario (07-security: validación de entradas).
+MAX_QUERY_CHARS = 20_000
 
 from shared import conversations
 from shared.concurrency import ModeBusyError, manager
@@ -54,7 +57,7 @@ async def get_conversation(conversation_id: str):
 
 # ── Council ──────────────────────────────────────────────────────────────
 class CouncilQueryIn(BaseModel):
-    content: str
+    content: str = Field(min_length=1, max_length=MAX_QUERY_CHARS)
 
 
 @router.post("/council/{conversation_id}/query")

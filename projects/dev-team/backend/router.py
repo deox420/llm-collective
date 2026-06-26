@@ -5,7 +5,9 @@ import asyncio
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+MAX_TASK_CHARS = 20_000  # tope de entrada de usuario (07-security)
 
 from shared import conversations, model_config
 from shared.concurrency import ModeBusyError, manager
@@ -23,8 +25,9 @@ def _error(code: str, message: str, status: int, **extra) -> JSONResponse:
 
 
 class TaskIn(BaseModel):
-    content: str
-    max_iterations: int | None = None
+    content: str = Field(min_length=1, max_length=MAX_TASK_CHARS)
+    # Tope del bucle de corrección (FR-D4); acotado para no permitir bucles largos.
+    max_iterations: int | None = Field(default=None, ge=1, le=20)
 
 
 @router.post("/devteam/{conversation_id}/task")

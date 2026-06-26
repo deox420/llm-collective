@@ -46,6 +46,7 @@ Este SDD no es un único documento, sino un cuerpo de documentación de ingenier
 - [API REST + SSE](specs/api-spec.md)
 - [Modelo de datos](specs/data-model.md)
 - [Plan de pruebas](specs/test-plan.md)
+- [Trazabilidad de requisitos](specs/traceability.md) — cada FR/NFR/CON → implementación + prueba (Fase 7)
 
 ### Decisiones de arquitectura (`adr/`)
 - [ADR-0001 · Ollama Cloud en vez de OpenRouter](adr/0001-ollama-cloud-vs-openrouter.md)
@@ -57,6 +58,7 @@ Este SDD no es un único documento, sino un cuerpo de documentación de ingenier
 - [ADR-0007 · PixelLab como pipeline de assets pixel-art](adr/0007-pixellab-assets.md)
 - [ADR-0008 · Concurrencia: un solo modo activo a la vez (lock global)](adr/0008-concurrencia-modo-unico-global.md)
 - [ADR-0009 · Sandbox del Dev Team: subprocess como backend por defecto](adr/0009-sandbox-subprocess-fallback.md)
+- [ADR-0010 · Fallback y caché de respuestas en `call_model`](adr/0010-fallback-y-cache-en-call-model.md)
 
 ### Diagramas (`diagrams/`)
 - C4: [contexto](diagrams/c4-context.md), [contenedores](diagrams/c4-container.md), [componentes](diagrams/c4-component.md)

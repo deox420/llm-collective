@@ -13,8 +13,12 @@ Esto hace que mover un modelo entre cloud, GPU dedicada y local sea
 cambiar un string en la config, no tocar la lógica de cada app.
 """
 from __future__ import annotations
+import hashlib
+import json
 import os
 import httpx
+
+from shared import model_config
 
 OLLAMA_CLOUD_HOST = os.environ.get("OLLAMA_CLOUD_HOST", "https://ollama.com")
 OLLAMA_CLOUD_API_KEY = os.environ.get("OLLAMA_CLOUD_API_KEY", "")
@@ -85,15 +89,40 @@ async def _anthropic_messages(model: str, messages: list[dict],
     return r.json()["content"][0]["text"]
 
 
-async def call_model(model_id: str, messages: list[dict], **opts) -> str:
-    """Enruta una llamada al backend correcto según el prefijo del model_id.
+# ---------------------------------------------------------------------------
+# Caché de respuestas (FR-5) y contadores de observabilidad (09-operations).
+# Caché en memoria, por proceso: dos llamadas idénticas (mismo modelo, mismos
+# mensajes y opciones) devuelven la respuesta cacheada sin tocar la red.
+# ---------------------------------------------------------------------------
+_cache: dict[str, str] = {}
+CACHE_HITS = 0  # se loguea como `cache_hit` por etapa (09-operations §observabilidad)
 
-    Contrato (02-architecture §2.2): devuelve texto; ValueError si el prefijo es
-    desconocido; RuntimeError si falta config (p. ej. GPU_HOST); propaga errores
-    HTTP del proveedor para que el orquestador aplique fallback (NFR-6).
+
+def _cache_key(model_id: str, messages: list[dict], opts: dict) -> str:
+    blob = json.dumps([model_id, messages, opts], sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def clear_cache() -> None:
+    """Vacía la caché de respuestas (tests y operación)."""
+    global CACHE_HITS
+    _cache.clear()
+    CACHE_HITS = 0
+
+
+def _should_fallback(exc: Exception) -> bool:
+    """¿El error justifica reintentar con el modelo de reserva? (NFR-6).
+
+    Sí ante errores de transporte (host caído, p. ej. GPU apagada) y respuestas
+    5xx del proveedor o 404 (el modelo "no existe" en el catálogo).
     """
-    dest = destination_for(model_id)  # ValueError si prefijo desconocido
-    model = model_id.split("/", 1)[1]
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        return code >= 500 or code == 404
+    return isinstance(exc, httpx.RequestError)
+
+
+async def _dispatch(dest: str, model: str, messages: list[dict], **opts) -> str:
     if dest == "cloud":
         return await _ollama_chat(OLLAMA_CLOUD_HOST, model, messages,
                                   api_key=OLLAMA_CLOUD_API_KEY, **opts)
@@ -105,6 +134,53 @@ async def call_model(model_id: str, messages: list[dict], **opts) -> str:
         return await _ollama_chat(LOCAL_HOST, model, messages, **opts)
     # dest == "anthropic"
     return await _anthropic_messages(model, messages, **opts)
+
+
+async def call_model(
+    model_id: str,
+    messages: list[dict],
+    *,
+    use_cache: bool = True,
+    allow_fallback: bool = True,
+    **opts,
+) -> str:
+    """Enruta una llamada al backend correcto según el prefijo del model_id.
+
+    Contrato (02-architecture §2.2): devuelve texto; ValueError si el prefijo es
+    desconocido; RuntimeError si falta config (p. ej. GPU_HOST).
+
+    - Caché (FR-5): dos llamadas idénticas hacen una sola petición de red. Se puede
+      desactivar por llamada con `use_cache=False`.
+    - Fallback (NFR-6): si el modelo falla con 5xx/404 o el host no responde, se
+      reintenta una vez con el modelo de reserva de `model_config.FALLBACKS`. El
+      reintento no vuelve a caer (allow_fallback=False) para no encadenar reintentos.
+    """
+    global CACHE_HITS
+    dest = destination_for(model_id)  # ValueError si prefijo desconocido (no hay fallback)
+    model = model_id.split("/", 1)[1]
+
+    key = _cache_key(model_id, messages, opts) if use_cache else None
+    if key is not None and key in _cache:
+        CACHE_HITS += 1
+        return _cache[key]
+
+    try:
+        result = await _dispatch(dest, model, messages, **opts)
+    except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+        if allow_fallback and _should_fallback(exc):
+            fb = model_config.fallback_for(model_id)
+            if fb and fb != model_id:
+                result = await call_model(
+                    fb, messages, use_cache=use_cache, allow_fallback=False, **opts
+                )
+                if key is not None:  # cachea también bajo la clave del modelo pedido
+                    _cache[key] = result
+                return result
+        raise
+
+    if key is not None:
+        _cache[key] = result
+    return result
 
 
 def _host_for(dest: str) -> tuple[str, str | None]:

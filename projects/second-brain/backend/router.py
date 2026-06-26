@@ -12,7 +12,9 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+MAX_QUERY_CHARS = 20_000  # tope de entrada de usuario (07-security)
 
 from shared import conversations, model_config
 from shared.concurrency import ModeBusyError, manager
@@ -103,8 +105,8 @@ async def index_status(job_id: str):
 
 # --- consulta --------------------------------------------------------------
 class QueryIn(BaseModel):
-    content: str
-    top_k: int = 6
+    content: str = Field(min_length=1, max_length=MAX_QUERY_CHARS)
+    top_k: int = Field(default=6, ge=1, le=50)
     council_overlay: bool = False
 
 

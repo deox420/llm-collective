@@ -93,11 +93,11 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 7 — Integración, seguridad y pulido
 
-- [ ] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs, validación de entradas, sandbox revisado.
-- [ ] Suite de tests completa según `specs/test-plan.md`; cobertura de la lógica de orquestación.
-- [ ] README de cada app actualizado con cómo arrancar y configurar.
-- [ ] Revisar costes/operación (`08-costs.md`, `09-operations.md`) y dejar notas de despliegue.
-- [ ] Verificación final contra los requisitos: cada FR/NFR/CON tiene implementación o queda anotado.
+- [x] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs, validación de entradas, sandbox revisado.
+- [x] Suite de tests completa según `specs/test-plan.md`; cobertura de la lógica de orquestación.
+- [x] README de cada app actualizado con cómo arrancar y configurar.
+- [x] Revisar costes/operación (`08-costs.md`, `09-operations.md`) y dejar notas de despliegue.
+- [x] Verificación final contra los requisitos: cada FR/NFR/CON tiene implementación o queda anotado.
 
 **DoD:** todo el `test-plan.md` pasa; los tres modos funcionan end-to-end en chat e interactivo; sin secretos expuestos; READMEs al día.
 
@@ -240,6 +240,33 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     endpoint index+query end-to-end. Verificación visual con Playwright (vault
     sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
 
+- **2026-06-26 · Fase 7 — Integración, seguridad y pulido · DoD CUMPLIDO.**
+  - **Seguridad (07-security.md):** revisión sin fugas — `health.py` solo devuelve
+    booleanos, `verify_models` imprime nombres de modelo (nunca la clave), el Bearer
+    nunca se loguea. **Validación de entradas** añadida en los tres routers (pydantic
+    `Field`): `content` 1–20 000 chars, `top_k` 1–50, `max_iterations` 1–20 → 422
+    antes de tomar el lock o llamar a un modelo. Sandbox revisado (sin cambios; ya
+    valida rutas + RLIMIT + sin secretos, ADR-0009).
+  - **Cierre del test-plan:** implementados los dos casos que faltaban en el núcleo —
+    **FR-5/TC-5 caché** y **NFR-6/TC-6 fallback**, ambos centralizados en
+    `call_model` (NFR-7) y configurables por perfil (`FALLBACKS` en `model_config`).
+    Decisión registrada en **ADR-0010**. Tests nuevos: 6 de router (caché on/off,
+    distinción de entradas, fallback 502→reserva, sin reserva propaga, no encadena)
+    + 5 de validación de entradas. **74 verdes** (antes 63).
+  - **READMEs** de las tres apps reescritos (cómo arrancar/configurar, API, seguridad,
+    tests). Creado `start.sh` (backend + frontend juntos), referenciado en
+    `09-operations.md`.
+  - **Costes/operación:** sección "Notas de despliegue (Fase 7)" en `09-operations.md`
+    (perfiles por objetivo, env vars completas, fallback/caché en operación, egress
+    requerido a ollama.com/anthropic).
+  - **Verificación final FR/NFR/CON:** matriz de trazabilidad en
+    `docs/specs/traceability.md` (cada requisito → implementación + prueba + estado).
+    Todo `Must` cubierto; lo que queda 🟡/⛔ está anotado (NFR-1 mide latencia real,
+    bloqueado por egress; sprites PixelLab de Fase 6, bloqueados).
+  - **Bloqueos del entorno sin cambio:** `ollama.com` y `api.pixellab.ai` siguen en
+    403; todo verificado con *faked*. El MCP de PixelLab apareció conectado en esta
+    sesión pero la generación de sprites es trabajo de Fase 6, no de Fase 7.
+
 - **2026-06-26 · Fase 6 — Vista interactiva · contrato + escenas (placeholders).**
   - `frontend/src/scenes.js`: implementaciones del contrato `SceneTheme` (§13.4) para
     los tres modos (Council mesa redonda, Dev Team oficina, Second Brain biblioteca):
@@ -258,15 +285,18 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
 
 ## 🔖 PUNTO DE RETOMA (2026-06-26)
 
-**Dónde retomar:** Fases 0–6 cerradas y pusheadas (rama
-`claude/llm-collective-phase-0-2947fb`, PR #1). Falta la **Fase 7** y desbloquear
-las corridas reales. Empezar por la Fase 7.
+**Dónde retomar:** Fases 0–5 cerradas en `main` (PR #1/#2). **Fase 7 cerrada** en la
+rama `claude/phase-7-integration-security-itzv2i` (su propio PR). Lo único que queda
+son los **bloqueos del entorno** (corridas reales con egress + sprites PixelLab); con
+acceso a `ollama.com`/PixelLab, ejecutar las verificaciones reales pendientes.
 
 ### Estado por fase
 - **0–5 ✅** núcleo + las 3 verticales (Council, Dev Team, Second Brain) end-to-end.
 - **6 ✅ (parcial)** vista interactiva con contrato `SceneTheme` + placeholders;
   faltan los sprites de PixelLab (bloqueados, ver abajo).
-- **7 ⏳ PENDIENTE** — integración, seguridad y pulido.
+- **7 ✅** integración, seguridad y pulido: validación de entradas, caché (FR-5) +
+  fallback (NFR-6) en `call_model`, READMEs, `start.sh`, notas de despliegue y
+  matriz de trazabilidad (`docs/specs/traceability.md`). 74 tests verdes.
 
 ### Cómo arrancar el proyecto
 ```bash
@@ -285,7 +315,8 @@ cd frontend && npm install && npm run dev      # frontend :5173 (proxy a :8000)
 - `frontend/src/`: `App.jsx` (shell con diseño Claude Design), `scenes.js` +
   `InteractiveScene.jsx` (Fase 6), `api.js`, `ParticleField.jsx`, `Icons.jsx`.
 - ADRs nuevos: **0008** (concurrencia modo único, diverge de SDD §12.4),
-  **0009** (sandbox subprocess en vez de Docker).
+  **0009** (sandbox subprocess en vez de Docker), **0010** (fallback + caché en
+  `call_model`).
 
 ### ⛔ Bloqueos del ENTORNO (no del código) — resolver en local o con allowlist
 1. **`ollama.com` (403 egress):** no se pueden hacer corridas reales de modelos ni
@@ -296,10 +327,15 @@ cd frontend && npm install && npm run dev      # frontend :5173 (proxy a :8000)
    colocar en `assets/scenes/council-round-table/`; luego apuntar `assets` en
    `frontend/src/scenes.js`.
 
-### Fase 7 — tareas pendientes (lo que toca)
-- [ ] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs,
-      validación de entradas, sandbox revisado.
-- [ ] Suite completa según `specs/test-plan.md`; cobertura de orquestación.
-- [ ] README de cada app (`projects/*/README.md`) con cómo arrancar/configurar.
-- [ ] Revisar costes/operación (`08-costs.md`, `09-operations.md`) + notas de despliegue.
-- [ ] Verificación final FR/NFR/CON: cada requisito con implementación o anotado.
+### Fase 7 — COMPLETADA (ver bitácora)
+- [x] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs,
+      validación de entradas (pydantic `Field` en los 3 routers), sandbox revisado.
+- [x] Suite completa según `specs/test-plan.md` (TC-5 caché, TC-6 fallback añadidos);
+      74 tests verdes.
+- [x] README de cada app (`projects/*/README.md`) con cómo arrancar/configurar + `start.sh`.
+- [x] Costes/operación: notas de despliegue en `09-operations.md`.
+- [x] Verificación final FR/NFR/CON: matriz en `docs/specs/traceability.md`.
+
+### Lo único que queda: bloqueos del entorno (no del código)
+- Corridas reales con egress a `ollama.com` (medir NFR-1/TC-C4, `verify_models`).
+- Sprites pixel-art de Fase 6 (PixelLab); placeholders con el mismo contrato en uso.

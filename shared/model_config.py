@@ -41,6 +41,14 @@ PROFILES: dict[str, dict] = {
         # Embeddings del Second Brain. En cloud_only van por cloud; cuando tengas
         # Ollama local, cambia a local/nomic-embed-text (gratis y más privado).
         "embeddings_model": "cloud/nomic-embed-text",
+        # Fallback configurable (NFR-6): si un modelo falla o no existe, call_model
+        # reintenta una vez con el modelo indicado aquí. Los 32B caen al 70B (más
+        # robusto); el 70B no tiene red de seguridad mejor, así que no se mapea.
+        "fallbacks": {
+            "cloud/qwen3:32b": "cloud/llama3.3:70b",
+            "cloud/deepseek-r1:32b": "cloud/llama3.3:70b",
+            "cloud/qwen3-coder:32b": "cloud/llama3.3:70b",
+        },
     },
 
     # ---- PERFIL: desarrollo barato en tu equipo ---------------------------
@@ -60,6 +68,13 @@ PROFILES: dict[str, dict] = {
             "tester":     "local/qwen2.5-coder:7b",
         },
         "embeddings_model": "local/nomic-embed-text",
+        # En local no hay coste por llamada; si un 7B falla, cae al de propósito
+        # general (llama3.1:8b).
+        "fallbacks": {
+            "local/qwen2.5:7b": "local/llama3.1:8b",
+            "local/qwen2.5-coder:7b": "local/llama3.1:8b",
+            "local/mistral:7b": "local/llama3.1:8b",
+        },
     },
 
     # ---- PERFIL: producción con chairman en GPU (física o alquilada) ------
@@ -80,6 +95,13 @@ PROFILES: dict[str, dict] = {
             "tester":     "cloud/qwen3-coder:32b",
         },
         "embeddings_model": "local/nomic-embed-text",
+        # Si la GPU alquilada está caída/apagada, el chairman cae a cloud (NFR-6);
+        # así una consulta sobrevive a una instancia GPU sin arrancar.
+        "fallbacks": {
+            "gpu/llama3.3:70b": "cloud/llama3.3:70b",
+            "gpu/qwen3:72b": "cloud/qwen3:32b",
+            "cloud/qwen3-coder:32b": "cloud/llama3.3:70b",
+        },
     },
 }
 
@@ -100,6 +122,14 @@ COUNCIL_MODELS: list[str] = _cfg["council_models"]
 CHAIRMAN_MODEL: str = _cfg["chairman_model"]
 DEVTEAM_ROLES: dict[str, str] = _cfg["devteam_roles"]
 EMBEDDINGS_MODEL: str = _cfg["embeddings_model"]
+# Mapa modelo -> modelo de reserva del perfil activo (NFR-6). Vacío si el perfil
+# no define ninguno.
+FALLBACKS: dict[str, str] = dict(_cfg.get("fallbacks", {}))
+
+
+def fallback_for(model_id: str) -> str | None:
+    """Modelo de reserva configurado para `model_id`, o None si no hay (NFR-6)."""
+    return FALLBACKS.get(model_id)
 
 
 def describe() -> str:

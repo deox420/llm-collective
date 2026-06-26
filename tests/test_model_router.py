@@ -10,7 +10,7 @@ import json
 import httpx
 import pytest
 
-from shared import model_router
+from shared import model_config, model_router
 
 
 @pytest.fixture
@@ -116,3 +116,69 @@ async def test_anthropic_adapts_payload(captured, monkeypatch):
     assert req["body"]["max_tokens"] == 512
     assert all(m["role"] != "system" for m in req["body"]["messages"])
     assert req["headers"].get("x-api-key") == "antkey"
+
+
+# ── TC-5 · FR-5: caché de respuestas ──────────────────────────────────────
+async def test_identical_calls_hit_cache_once(captured):
+    """Dos consultas idénticas hacen UNA sola llamada al modelo (TC-5)."""
+    msgs = [{"role": "user", "content": "misma pregunta"}]
+    a = await model_router.call_model("cloud/qwen3:32b", msgs)
+    b = await model_router.call_model("cloud/qwen3:32b", msgs)
+    assert a == b == "respuesta-ollama"
+    assert len(captured) == 1  # la segunda salió de la caché
+    assert model_router.CACHE_HITS == 1
+
+
+async def test_cache_can_be_bypassed(captured):
+    msgs = [{"role": "user", "content": "x"}]
+    await model_router.call_model("cloud/qwen3:32b", msgs, use_cache=False)
+    await model_router.call_model("cloud/qwen3:32b", msgs, use_cache=False)
+    assert len(captured) == 2  # sin caché, dos peticiones reales
+
+
+async def test_cache_distinguishes_inputs(captured):
+    await model_router.call_model("cloud/qwen3:32b", [{"role": "user", "content": "a"}])
+    await model_router.call_model("cloud/qwen3:32b", [{"role": "user", "content": "b"}])
+    assert len(captured) == 2  # mensajes distintos → no comparten entrada de caché
+
+
+# ── TC-6 · NFR-6: fallback configurable ───────────────────────────────────
+@pytest.fixture
+def cloud_5xx_then_ok(monkeypatch):
+    """Mock: el modelo 'broken' devuelve 502; cualquier otro responde 200."""
+    requests: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content) if request.content else {}
+        requests.append(body.get("model"))
+        if body.get("model") == "broken:1":
+            return httpx.Response(502, json={"error": "bad gateway"})
+        return httpx.Response(200, json={"message": {"content": "respuesta-reserva"}})
+
+    mock_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    monkeypatch.setattr(model_router, "_client", mock_client)
+    return requests
+
+
+async def test_502_triggers_configured_fallback(cloud_5xx_then_ok, monkeypatch):
+    """Si el modelo cloud da 502, se usa el fallback configurado (TC-6)."""
+    monkeypatch.setattr(model_config, "FALLBACKS", {"cloud/broken:1": "cloud/good:1"})
+    out = await model_router.call_model("cloud/broken:1", [{"role": "user", "content": "hi"}])
+    assert out == "respuesta-reserva"
+    # Se intentó el original (502) y luego el de reserva.
+    assert cloud_5xx_then_ok == ["broken:1", "good:1"]
+
+
+async def test_no_fallback_configured_propagates(cloud_5xx_then_ok, monkeypatch):
+    monkeypatch.setattr(model_config, "FALLBACKS", {})
+    with pytest.raises(httpx.HTTPStatusError):
+        await model_router.call_model("cloud/broken:1", [{"role": "user", "content": "hi"}])
+    assert cloud_5xx_then_ok == ["broken:1"]  # sin reserva, no reintenta
+
+
+async def test_fallback_does_not_chain(cloud_5xx_then_ok, monkeypatch):
+    """Si el modelo de reserva también falla, el error se propaga (un solo reintento)."""
+    monkeypatch.setattr(model_config, "FALLBACKS", {"cloud/broken:1": "cloud/broken:1"})
+    # fallback == original → no reintenta (evita bucle); propaga el 502.
+    with pytest.raises(httpx.HTTPStatusError):
+        await model_router.call_model("cloud/broken:1", [{"role": "user", "content": "hi"}])
