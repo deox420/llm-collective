@@ -35,6 +35,22 @@ Si ya expiraron, regenéralos con el MCP (`create_map_object`):
 - **table.png** — `large round wooden table with a polished gold rim, medieval, empty, retro pixel art, limited palette` · 160×160 · `high top-down`
 - **scroll.png** — `rolled parchment scroll with a red wax seal, medieval verdict, retro pixel art, limited palette` · 64×64 · `high top-down`
 
+## Animaciones (v3, south, 6 frames de movimiento + 1 de referencia)
+
+`fetch.sh` baja los frames `1..6` y los ensambla en una tira horizontal de 60px
+(`convert … +append`) que la escena reproduce con `steps(6)`. URL de cada frame:
+`<CDN>/<character_id>/animations/<anim_id>/south/<n>.png` (n = 0..6; 0 = referencia).
+
+| Fichero | character_id | anim_id | Gesto |
+|---------|--------------|---------|-------|
+| `knight-a.talk.png` | `c179c5ba-…` | `82b5cb62-748d-4b14-afd0-b13dac426915` | hablar/gesticular |
+| `knight-b.talk.png` | `984599ba-…` | `07a6b012-af04-43d8-b9e7-9d6a37ee2b17` | hablar/gesticular |
+| `knight-c.talk.png` | `f4d10030-…` | `PENDING_C_ANIM_ID` (en generación; rellena en fetch.sh) | hablar/gesticular |
+| `king.synthesize.png` | `438e8a36-…` | `9da7306a-c810-41fd-972f-ba820ad99e13` | levantarse y alzar la mano |
+
+Requiere **ImageMagick** (`convert`). Sin él, `fetch.sh` omite las tiras y la escena
+usa el sprite estático con el halo CSS (sigue reflejando la etapa real).
+
 ## Cómo bajarlos
 
 Desde una máquina con egress a PixelLab:

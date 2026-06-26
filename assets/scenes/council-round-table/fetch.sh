@@ -33,4 +33,32 @@ else
   echo "PIXELLAB_API_KEY no definida: omito table.png/scroll.png (regenéralos con el MCP)."
 fi
 
+# Animaciones: frames south 1..6 → tira horizontal de 6×60px que la escena
+# reproduce con steps(6). URL pública: <char_id>/animations/<anim_id>/south/<n>.png.
+# Requiere ImageMagick (`convert`). Si no está, se omiten (la escena usa el sprite
+# estático con el halo CSS).
+declare -A ANIM=(
+  [knight-a.talk.png]="c179c5ba-3960-44ac-b9cb-f538dc5f46b0 82b5cb62-748d-4b14-afd0-b13dac426915"
+  [knight-b.talk.png]="984599ba-7768-4d67-b859-5c6f38652e99 07a6b012-af04-43d8-b9e7-9d6a37ee2b17"
+  [knight-c.talk.png]="f4d10030-c67b-4645-9918-55e3342645b1 PENDING_C_ANIM_ID"
+  [king.synthesize.png]="438e8a36-f8b2-4652-a3c7-0d9c80033e69 9da7306a-c810-41fd-972f-ba820ad99e13"
+)
+if command -v convert >/dev/null 2>&1; then
+  for out in "${!ANIM[@]}"; do
+    read -r cid aid <<< "${ANIM[$out]}"
+    case "$aid" in PENDING_*) echo "  ($out: anim_id pendiente; ver MANIFEST.md)"; continue;; esac
+    echo "↓ $out (animación)"
+    tmp="$(mktemp -d)"
+    ok=1
+    for n in 1 2 3 4 5 6; do
+      curl -fSL -o "$tmp/$n.png" "$CDN/$cid/animations/$aid/south/$n.png" || ok=0
+    done
+    [ "$ok" = 1 ] && convert "$tmp/1.png" "$tmp/2.png" "$tmp/3.png" "$tmp/4.png" "$tmp/5.png" "$tmp/6.png" \
+      -background none -resize 60x60 +append "$out" || echo "  (frames incompletos: regenera, ver MANIFEST.md)"
+    rm -rf "$tmp"
+  done
+else
+  echo "ImageMagick (convert) no instalado: omito las tiras de animación (.talk/.synthesize)."
+fi
+
 echo "Listo. El frontend detecta los .png automáticamente (scenes.js)."
