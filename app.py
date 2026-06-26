@@ -29,20 +29,23 @@ from shared.concurrency import MODES, ModeBusyError, manager  # noqa: E402
 from shared.health import model_availability  # noqa: E402
 from shared.sse import StageEmitter  # noqa: E402
 
+import importlib  # noqa: E402
+
 from projects.council.backend.router import router as council_router  # noqa: E402
-from shared.devteam_loader import load_devteam_backend  # noqa: E402
+from shared.backend_loader import load_devteam_backend, load_secondbrain_backend  # noqa: E402
 
 app = FastAPI(title="LLM Collective", version="0.0.0")
 
 # Council (Fase 3): endpoints de conversaciones + /api/council/{id}/query (SSE).
 app.include_router(council_router)
 
-# Dev Team (Fase 4): /api/devteam/{id}/task (SSE). Se carga vía loader por el guion
-# en la ruta del paquete (projects/dev-team/backend).
+# Dev Team (Fase 4) y Second Brain (Fase 5): se cargan vía loader por el guion en
+# la ruta de sus paquetes.
 load_devteam_backend()
-import importlib  # noqa: E402
-
 app.include_router(importlib.import_module("devteam_backend.router").router)
+
+load_secondbrain_backend()
+app.include_router(importlib.import_module("secondbrain_backend.router").router)
 
 # Secuencias de etapas por modo (las reales de cada vertical; aquí solo para la
 # demo del shell). Council/DevTeam/Brain según docs 04/05/06 y api-spec.

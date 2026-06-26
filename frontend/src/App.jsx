@@ -3,7 +3,7 @@ import {
   ACCENTS, ACCENT_RGB, MODE_ORDER, TITLES, LANES, THEME_VARS,
   STAGES_BY_MODE, STAGE_LABELS, stageLabel, COMPOSER_PLACEHOLDER, COMPOSER_LANE, SAMPLE_HISTORY,
 } from './theme.js'
-import { ModeBusyError, createConversation, fetchHealth, runCouncilQuery, runDevteamTask, runMode } from './api.js'
+import { ModeBusyError, createConversation, fetchHealth, runBrainQuery, runCouncilQuery, runDevteamTask, runMode } from './api.js'
 import ParticleField from './ParticleField.jsx'
 import { Icon } from './Icons.jsx'
 
@@ -21,6 +21,7 @@ export default function App() {
   const [council, setCouncil] = useState(null)  // {opinions, reviews, final}
   const [councilError, setCouncilError] = useState(null)
   const [devteam, setDevteam] = useState(null)  // {plan, code, review, tests[], files[], iterations, error}
+  const [brain, setBrain] = useState(null)      // {answer, retrieved[], citations[], error}
   const [histories, setHistories] = useState({ council: [], devteam: [], brain: [] })
   const [composer, setComposer] = useState('')
   const [health, setHealth] = useState(null)
@@ -92,6 +93,29 @@ export default function App() {
     } finally { setBusy(null) }
   }, [showToast])
 
+  const startBrain = useCallback(async (question) => {
+    if (busyRef.current) { showToast(busyRef.current.mode); return }
+    setBrain({ answer: '', retrieved: [], citations: [], error: null })
+    setBusy({ mode: 'brain', stages: STAGES_BY_MODE.brain, done: [], current: null })
+    try {
+      const conv = await createConversation('second-brain')
+      await runBrainQuery(conv.id, question, {
+        onEvent: ({ event, data }) => {
+          if (event === 'stage:start') setBusy((b) => b && { ...b, current: data.stage })
+          else if (event === 'stage:done') setBusy((b) => b && { ...b, done: [...b.done, data.stage], current: null })
+          else if (event === 'retrieved') setBrain((s) => ({ ...s, retrieved: data.notes || [] }))
+          else if (event === 'answer') setBrain((s) => ({ ...s, answer: data.content }))
+          else if (event === 'citations') setBrain((s) => ({ ...s, citations: data.notes || [] }))
+          else if (event === 'model_error') setBrain((s) => ({ ...s, error: `No disponible (${data.code}). ¿Vault indexado y acceso a Ollama?` }))
+        },
+      })
+      setHistories((h) => ({ ...h, brain: [{ id: `b-${h.brain.length + 1}`, title: question.slice(0, 42) }, ...h.brain] }))
+    } catch (e) {
+      if (e instanceof ModeBusyError) showToast(e.activeMode || 'brain')
+      else setBrain((s) => ({ ...(s || {}), error: 'No se pudo completar la consulta.' }))
+    } finally { setBusy(null) }
+  }, [showToast])
+
   const startDemo = useCallback(async (m) => {
     if (busyRef.current) { showToast(busyRef.current.mode); return }
     setBusy({ mode: m, stages: STAGES_BY_MODE[m], done: [], current: null })
@@ -122,6 +146,7 @@ export default function App() {
     setComposer('')
     if (mode === 'council') startCouncil(text)
     else if (mode === 'devteam') startDevteam(text)
+    else if (mode === 'brain') startBrain(text)
     else startDemo(mode)
   }
 
@@ -150,7 +175,7 @@ export default function App() {
         {mode === 'hub' && <Hub busy={busy} onSelect={selectMode} />}
         {mode === 'council' && <CouncilView council={council} error={councilError} busy={busy} tab={councilTab} onTab={setCouncilTab} panelOpen={panelOpen} />}
         {mode === 'devteam' && <DevTeamView busy={busy} panelOpen={panelOpen} result={devteam} />}
-        {mode === 'brain' && <BrainView busy={busy} panelOpen={panelOpen} accent={accent} />}
+        {mode === 'brain' && <BrainView busy={busy} panelOpen={panelOpen} result={brain} />}
         {mode !== 'hub' && (
           <Composer
             mode={mode} value={composer} onChange={setComposer} onSubmit={onSubmit} disabled={!!busy}
@@ -493,20 +518,34 @@ function DevTeamView({ busy, panelOpen, result }) {
 }
 
 /* ============================ SECOND BRAIN ============================ */
-function BrainView({ busy, panelOpen, accent }) {
-  const notes = [
-    { title: 'Sync Strategy', score: '0.94', snippet: 'Decisión: local-first sin servidor de coordinación. El merge ocurre en el cliente.' },
-    { title: 'CRDT vs OT', score: '0.91', snippet: 'OT requiere un servidor central que ordene las operaciones. Los CRDT convergen sin coordinación.' },
-    { title: 'Yjs vs Automerge', score: '0.78', snippet: 'Yjs gana en coste de memoria y madurez del ecosistema; Automerge tiene mejor API.' },
-  ]
+function BrainView({ busy, panelOpen, result }) {
+  const r = result || {}
+  const notes = r.retrieved || []
+  const hasRun = busy?.mode === 'brain' || r.answer || notes.length || r.error
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative', zIndex: 1 }}>
       <div data-scroll style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '26px 24px 24px' }}>
+          {!hasRun && (
+            <div style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '60px 0' }}>
+              <div style={{ fontSize: 18, color: 'var(--text)', marginBottom: 6 }}>Tu segundo cerebro.</div>
+              <div style={{ fontSize: 14 }}>Pregunta y responderé citando tus notas de Obsidian (RAG local).</div>
+            </div>
+          )}
+          {r.error && <Banner>{r.error}</Banner>}
           {busy?.mode === 'brain' && <RunningStrip stages={busy.stages} done={busy.done} current={busy.current} label="Buscando en tus notas" />}
-          <div style={{ marginTop: 16, fontSize: 13.5, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-            Vista previa del Second Brain. El RAG real sobre el vault de Obsidian llega en la Fase 5; el panel muestra las notas recuperadas y el acceso por túnel.
-          </div>
+          {r.answer && (
+            <div style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.66, whiteSpace: 'pre-wrap' }}>{r.answer}</div>
+          )}
+          {r.citations && r.citations.length > 0 && (
+            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {r.citations.map((c) => (
+                <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: 'color-mix(in oklab,var(--accent) 11%,var(--surface))', color: 'var(--accent)', fontSize: 12.5, border: '1px solid color-mix(in oklab,var(--accent) 24%,transparent)' }}>
+                  <Icon name="file" size={11} stroke="currentColor" />{c}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {panelOpen && (
@@ -514,17 +553,19 @@ function BrainView({ busy, panelOpen, accent }) {
           <div data-scroll style={{ height: '100%', overflowY: 'auto', padding: '18px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 9px', borderRadius: 8, background: 'color-mix(in oklab,#3f9a6a 12%,var(--surface))', marginBottom: 16 }}>
               <Icon name="lock" size={14} stroke="#3f9a6a" />
-              <span style={{ fontSize: 11.5, color: '#3f9a6a', fontWeight: 500 }}>Conectado vía túnel seguro</span>
+              <span style={{ fontSize: 11.5, color: '#3f9a6a', fontWeight: 500 }}>Acceso solo por túnel seguro</span>
             </div>
-            <div style={{ ...SECTION_LABEL, marginBottom: 12 }}>Notas recuperadas · 3</div>
+            <div style={{ ...SECTION_LABEL, marginBottom: 12 }}>Notas recuperadas · {notes.length}</div>
+            {notes.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>Sin notas todavía.</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {notes.map((n) => (
-                <div key={n.title} data-card style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 12, background: 'var(--surface)', cursor: 'pointer' }}>
+              {notes.map((n, i) => (
+                <div key={i} data-card style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 12, background: 'var(--surface)', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
                     <Icon name="file" size={13} stroke="var(--accent)" />
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{n.title}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: MONO, color: 'var(--text-faint)' }}>{n.score}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.note_path}</span>
+                    {n.score != null && <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: MONO, color: 'var(--text-faint)' }}>{n.score}</span>}
                   </div>
+                  {n.heading && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>{n.heading}</div>}
                   <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.55 }}>{n.snippet}</div>
                 </div>
               ))}

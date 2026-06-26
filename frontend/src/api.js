@@ -89,6 +89,17 @@ export async function runDevteamTask(conversationId, content, { onEvent, maxIter
   await consumeSSE(res, onEvent)
 }
 
+// Consulta RAG real al Second Brain (SSE): retrieved → answer → citations.
+export async function runBrainQuery(conversationId, content, { onEvent, topK } = {}) {
+  const res = await fetch(`/api/secondbrain/${conversationId}/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content, top_k: topK || 6 }),
+  })
+  await throwIfBusy(res)
+  await consumeSSE(res, onEvent)
+}
+
 export async function fetchHealth() {
   const r = await fetch('/api/health')
   return r.json()

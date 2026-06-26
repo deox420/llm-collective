@@ -1,6 +1,6 @@
 """Configuración común de tests."""
-from shared.devteam_loader import load_devteam_backend
+from shared.backend_loader import load_devteam_backend, load_secondbrain_backend
 
-# Registra el paquete del Dev Team (projects/dev-team/backend) como devteam_backend
-# para poder importarlo pese al guion en la ruta.
+# Registra los backends con guion en la ruta como paquetes importables.
 load_devteam_backend()
+load_secondbrain_backend()

@@ -105,3 +105,37 @@ async def call_model(model_id: str, messages: list[dict], **opts) -> str:
         return await _ollama_chat(LOCAL_HOST, model, messages, **opts)
     # dest == "anthropic"
     return await _anthropic_messages(model, messages, **opts)
+
+
+def _host_for(dest: str) -> tuple[str, str | None]:
+    """Devuelve (host, api_key) para un destino Ollama. Lanza si falta config."""
+    if dest == "cloud":
+        return OLLAMA_CLOUD_HOST, OLLAMA_CLOUD_API_KEY
+    if dest == "gpu":
+        if not GPU_HOST:
+            raise RuntimeError("GPU_HOST no configurado en .env")
+        return GPU_HOST, None
+    if dest == "local":
+        return LOCAL_HOST, None
+    raise ValueError(f"embeddings no soportados para destino {dest!r}")
+
+
+async def embed_text(model_id: str, text: str) -> list[float]:
+    """Embedding de un texto vía /api/embeddings de Ollama (Second Brain, FR-S1).
+
+    No aplica a anthropic/. El prefijo decide host igual que call_model.
+    """
+    dest = destination_for(model_id)
+    host, api_key = _host_for(dest)
+    model = model_id.split("/", 1)[1]
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    r = await _client.post(
+        f"{host}/api/embeddings", json={"model": model, "prompt": text}, headers=headers
+    )
+    r.raise_for_status()
+    return r.json()["embedding"]
+
+
+async def embed_texts(model_id: str, texts: list[str]) -> list[list[float]]:
+    """Embeddings de varios textos (secuencial; el batching real lo decide el caller)."""
+    return [await embed_text(model_id, t) for t in texts]

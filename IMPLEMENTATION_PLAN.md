@@ -69,13 +69,13 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 5 — Second Brain (vertical completa)
 
-- [ ] Ingesta del vault Obsidian: trocear, generar embeddings locales (`nomic-embed-text`) y guardarlos en el vector store (`06-second-brain.md`, `data-model.md`).
-- [ ] Recuperación + síntesis con citas a las notas fuente; etapas retrieval → synthesis por SSE.
-- [ ] Acceso remoto por **túnel** (Tailscale/Cloudflare), nunca puerto abierto (ADR-0006, NFR de seguridad).
-- [ ] Frontend vista Chat con chips de citación y notas recuperadas.
-- [ ] Tests: la recuperación trae las notas correctas; las respuestas citan fuentes reales.
+- [x] Ingesta del vault Obsidian: trocear, generar embeddings locales (`nomic-embed-text`) y guardarlos en el vector store (`06-second-brain.md`, `data-model.md`).
+- [x] Recuperación + síntesis con citas a las notas fuente; etapas retrieval → synthesis por SSE.
+- [x] Acceso remoto por **túnel** (Tailscale/Cloudflare), nunca puerto abierto (ADR-0006, NFR de seguridad). _(Guarda `require_tunnel`: solo loopback o token de túnel.)_
+- [x] Frontend vista Chat con chips de citación y notas recuperadas.
+- [x] Tests: la recuperación trae las notas correctas; las respuestas citan fuentes reales.
 
-**DoD:** una pregunta sobre el vault responde citando notas reales; el acceso remoto funciona solo por túnel; tests verdes.
+**DoD:** una pregunta sobre el vault responde citando notas reales; el acceso remoto funciona solo por túnel; tests verdes. _(Verificado: RAG real con Chroma; la pregunta sobre sync recupera sync.md (top) y la respuesta lo cita. Embeddings/chairman faked por el bloqueo de egress.)_
 
 ---
 
@@ -221,3 +221,21 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     pipeline avanza, **loop_back** tras fallo y luego pasa, tope de iteraciones (FR-D4),
     endpoint SSE + persistencia. Verificación visual con Playwright (iter1 falla →
     iter2 OK), modelos faked por el bloqueo de egress.
+
+- **2026-06-26 · Fase 5 — Second Brain (vertical completa) · DoD CUMPLIDO.**
+  - `shared/model_router.embed_text/embed_texts` (vía /api/embeddings de Ollama).
+  - `projects/second-brain/backend/`: `chunker.py` (troceo por headings con solape),
+    `store.py` (Chroma + manifiesto mtime; persistente o efímero), `indexer.py`
+    (build_plan/apply_plan con reindexado **incremental** por mtime y borrado de notas
+    eliminadas), `retriever.py` (recuperación top_k + síntesis citando notas),
+    `router.py` (index 202 + estado de job, query SSE bajo lock 'brain').
+  - **Acceso solo por túnel** (FR-S5, ADR-0006): dependencia `require_tunnel`
+    (loopback o token `SECONDBRAIN_TUNNEL_TOKEN`); acceso directo externo → 403.
+  - Frontend `BrainView`: respuesta + **chips de citación** + panel de notas
+    recuperadas con score + indicador de túnel. `api.runBrainQuery`.
+  - Backend cargado vía `shared/backend_loader.py` (generaliza el loader; `dev-team` y
+    `second-brain` llevan guion). 
+  - Tests: **63 verdes** — chunking, store, indexado + incremental (FR-S2), la
+    respuesta cita notas reales (FR-S3/S4), túnel rechaza acceso directo (TC-S5),
+    endpoint index+query end-to-end. Verificación visual con Playwright (vault
+    sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
