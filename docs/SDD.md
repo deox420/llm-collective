@@ -41,6 +41,7 @@ Este SDD no es un único documento, sino un cuerpo de documentación de ingenier
 - [11 · Glosario](11-glossary.md)
 - [12 · Frontend y UX](12-frontend.md) — navegación, paletas, fondo animado, concurrencia en la UI
 - [13 · Vista interactiva y escenarios](13-interactive-scenes.md) — escenas pixel-art temáticas, contrato de tema, pipeline PixelLab
+- [14 · SDD de Escenas Interactivas](14-scenes-sdd.md) — **rehecho v2**: movimiento real de personajes, coreografía por eventos, arte detallado, contrato `SceneTheme v2`
 
 ### Especificaciones técnicas (`specs/`)
 - [API REST + SSE](specs/api-spec.md)
@@ -59,6 +60,7 @@ Este SDD no es un único documento, sino un cuerpo de documentación de ingenier
 - [ADR-0008 · Concurrencia: un solo modo activo a la vez (lock global)](adr/0008-concurrencia-modo-unico-global.md)
 - [ADR-0009 · Sandbox del Dev Team: subprocess como backend por defecto](adr/0009-sandbox-subprocess-fallback.md)
 - [ADR-0010 · Fallback y caché de respuestas en `call_model`](adr/0010-fallback-y-cache-en-call-model.md)
+- [ADR-0011 · Sistema de coreografía de escena dirigido por eventos](adr/0011-sistema-de-coreografia-de-escena.md)
 
 ### Diagramas (`diagrams/`)
 - C4: [contexto](diagrams/c4-context.md), [contenedores](diagrams/c4-container.md), [componentes](diagrams/c4-component.md)

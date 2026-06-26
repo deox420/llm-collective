@@ -240,6 +240,21 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     endpoint index+query end-to-end. Verificación visual con Playwright (vault
     sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
 
+- **2026-06-26 · Escenas v2 — SDD dedicado (rehacer con movimiento real).**
+  - A petición del usuario, las escenas se rehacen "bien hechas". Elecciones:
+    **movimiento real** (los personajes caminan entre posiciones según la etapa),
+    **arte top-down más grande/detallado** (80px, 8 direcciones), y **Council primero**
+    al 100% antes de replicar.
+  - Nuevo SDD dedicado `docs/14-scenes-sdd.md`: dirección de arte, modelo de espacio
+    (waypoints + rutas), **sistema de coreografía** (`choreography(state)→objetivos`),
+    mapeo evento SSE→movimiento, reproducción (tween rAF + tiras por dirección),
+    `prefers-reduced-motion`, spec de assets (8-dir + walk + acciones), contrato
+    `SceneTheme v2`, diseño por escena (Council detallado; Dev Team/Brain esbozados) y
+    plan por fases (F-S0 motor → F-S1/2 Council → F-S3 replicar). Decisión en
+    **ADR-0011**. Supersede el contrato de doc 13 §13.4.
+  - Pendiente: aprobación del SDD por el usuario → ejecutar F-S0 (motor) y F-S1/2
+    (Council). Los assets v1 actuales siguen sirviendo de placeholder mientras tanto.
+
 - **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
   - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council
     (caballeros A/B/C, rey/chairman, mesa redonda y pergamino del veredicto),

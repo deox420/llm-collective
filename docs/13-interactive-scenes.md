@@ -3,6 +3,11 @@
 **Versión:** 1.1 · **Estado:** Borrador · **Fecha:** 2026-06-26
 **Depende de:** [12 · Frontend](12-frontend.md), [04 Council](04-council.md), [05 Dev Team](05-dev-team.md), [06 Second Brain](06-second-brain.md)
 
+> **Nota (2026-06-26):** la vista interactiva se **rehace en v2** con movimiento real de
+> los personajes (caminan entre posiciones según la etapa) y arte más detallado. El diseño
+> detallado vive en **[14 · SDD de Escenas Interactivas](14-scenes-sdd.md)**, que supersede
+> el contrato `SceneTheme` de §13.4. Este documento se mantiene como contexto/visión.
+
 ---
 
 ## 13.1 Propósito
