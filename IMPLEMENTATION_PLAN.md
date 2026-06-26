@@ -188,3 +188,16 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     opiniones + rankings, parseo de rankings, más votado, y endpoint SSE end-to-end
     con persistencia. Verificación visual del flujo completo con Playwright (modelos
     faked por el bloqueo de egress).
+
+- **2026-06-26 · Diseño Claude Design (LLM Collective.html) aplicado al frontend.**
+  - Importado del bundle exportado de Claude Design (la auth del MCP `DesignSync` no
+    estaba disponible en remoto; el usuario adjuntó el HTML). Extraído el componente
+    y assets del bundle datacore y re-implementado en React conservando el wiring real.
+  - Tema claro/oscuro (variables CSS `@property`, cross-fade), acentos por modo,
+    IBM Plex Mono local, fondo de partículas (canvas) reposo/working, sidebar con
+    carpetas+historial, paneles contextuales (council revisión+consenso REAL; devteam
+    pipeline; brain notas+túnel), composer por modo, toast no bloqueante (por etapas,
+    sin ETA — regla CLAUDE.md, aunque el diseño mostraba ETA).
+  - Doc 13 → v1.1 (§13.1-bis) y reparto de herramientas en CLAUDE.md. Build verde;
+    45 tests backend. La vista interactiva pixel-art (escenas/personajes) sigue siendo
+    de PixelLab en la Fase 6; este diseño cubre la UI del shell.
