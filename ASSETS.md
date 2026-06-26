@@ -142,6 +142,16 @@ El contrato `SceneTheme` (`docs/13-interactive-scenes.md` §13.4) ya separa lóg
 
 No toques la lógica de etapas ni la de concurrencia al integrar arte.
 
+> **Estado (2026-06-26):** la integración ya está hecha en el código. `scenes.js`
+> carga los PNG de `assets/scenes/council-round-table/` con `import.meta.glob`
+> tolerante (si faltan, usa placeholders) e `InteractiveScene.jsx` pinta sprites +
+> mesa + pergamino. Solo falta **soltar los binarios**: los 6 assets de Council
+> están generados en la cuenta de PixelLab (ver
+> `assets/scenes/council-round-table/MANIFEST.md`), pero el entorno de generación
+> bloquea por egress la descarga (`api.pixellab.ai`/`backblaze.pixellab.ai`, 403).
+> Bájalos con `assets/scenes/council-round-table/fetch.sh` desde una máquina con
+> egress a PixelLab y aparecerán en la escena sin más cambios.
+
 ---
 
 ## 5. Prompts de los otros modos (cuando toque)

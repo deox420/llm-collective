@@ -10,12 +10,38 @@
 
 const POSE = { IDLE: 'idle', ACTIVE: 'active', TALK: 'talk', WAIT: 'wait', DONE: 'done', DIM: 'dim' }
 
+// ---- Assets pixel-art de PixelLab (ASSETS.md, §13.5) ----------------------
+// Los PNGs canónicos viven en assets/scenes/<theme>/ (raíz del repo). Se cargan
+// con import.meta.glob de forma PEREZOSA-TOLERANTE: si los binarios aún no están
+// (bloqueo de egress de PixelLab en el entorno), el mapa queda vacío y la escena
+// cae a los placeholders DOM/CSS con el MISMO contrato. Soltar los PNGs en la
+// carpeta hace que la escena los use sin tocar más código (§13.5).
+const councilFiles = import.meta.glob(
+  '../../assets/scenes/council-round-table/*.png',
+  { eager: true, query: '?url', import: 'default' }
+)
+function councilAsset(name) {
+  const hit = Object.entries(councilFiles).find(([p]) => p.endsWith('/' + name))
+  return hit ? hit[1] : null
+}
+
 // ---- Council: mesa redonda (3 caballeros A/B/C + rey chairman) -------------
 const council = {
   id: 'council-round-table',
   mode: 'council',
   label: 'La mesa redonda',
   centerLabel: 'Rey',
+  // Sprites reales si existen; null → placeholder. Nombres = convención ASSETS.md.
+  assets: {
+    sprites: {
+      A: councilAsset('knight-a.png'),
+      B: councilAsset('knight-b.png'),
+      C: councilAsset('knight-c.png'),
+      king: councilAsset('king.png'),
+    },
+    table: councilAsset('table.png'),
+    scroll: councilAsset('scroll.png'),
+  },
   agents: [
     { id: 'A', kind: 'knight', name: 'Caballero A', tint: '#3b82c4' },
     { id: 'B', kind: 'knight', name: 'Caballero B', tint: '#e0673c' },

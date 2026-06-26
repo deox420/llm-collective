@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Permite importar los assets de escena de PixelLab desde la raíz del repo
+    // (assets/scenes/…), fuera del root de Vite (frontend/). Ver scenes.js.
+    fs: { allow: ['..'] },
     proxy: {
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },

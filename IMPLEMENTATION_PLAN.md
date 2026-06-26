@@ -82,7 +82,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 ## Fase 6 — Vista interactiva + assets PixelLab
 
 - [x] Implementar el contrato `SceneTheme` (`13-interactive-scenes.md` §13.4) en el frontend.
-- [ ] **(Bloqueado)** Generar los assets de **Council** (mesa redonda) con PixelLab vía MCP siguiendo `ASSETS.md`. El MCP de PixelLab no está conectado y `api.pixellab.ai` está bloqueado por la política de egress (403). Generar en local/con el MCP disponible.
+- [~] **Assets de Council generados; descarga bloqueada por egress.** Con el MCP de PixelLab conectado se generaron los 6 assets (3 caballeros + rey + mesa + pergamino), verificados por preview. **No se pueden descargar los PNG**: los hosts de descarga (`api.pixellab.ai`, `backblaze.pixellab.ai`) están bloqueados por la política de egress (403); no se rodea. IDs y URLs en `assets/scenes/council-round-table/MANIFEST.md` + `fetch.sh`. El frontend ya está cableado (ver siguiente punto); soltar los PNG es el único paso restante.
 - [x] Cablear el mapa etapa→pose (sobre placeholders DOM/CSS con el mismo contrato; sustituir por sprites cuando existan).
 - [x] Clic en personaje → detalle real (opinión/código/nota). Respetar `prefers-reduced-motion`.
 - [x] Escenas de Dev Team (oficina) y Second Brain (biblioteca) (placeholders con el contrato).
@@ -239,6 +239,25 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     respuesta cita notas reales (FR-S3/S4), túnel rechaza acceso directo (TC-S5),
     endpoint index+query end-to-end. Verificación visual con Playwright (vault
     sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
+
+- **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
+  - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council
+    (caballeros A/B/C, rey/chairman, mesa redonda y pergamino del veredicto),
+    estilo coherente (48px, low top-down, paleta limitada). Verificados por preview.
+    IDs en `assets/scenes/council-round-table/MANIFEST.md`.
+  - **Escena cableada para sprites reales** (sin romper el contrato): `scenes.js`
+    carga los PNG con `import.meta.glob` TOLERANTE (si no están, cae a placeholders);
+    `InteractiveScene.jsx` pinta sprite de cada agente, la mesa como nodo central y
+    el pergamino al llegar al veredicto (`data.final`); CSS `.iscene-sprite/-scroll`
+    con poses idle/active/talk/done y `image-rendering: pixelated`; `vite.config`
+    permite importar assets desde la raíz (`fs.allow`). Build verde (37 módulos).
+  - **BLOQUEADO la descarga de los PNG:** los hosts de PixelLab
+    (`api.pixellab.ai`, `backblaze.pixellab.ai`) están bloqueados por la política de
+    egress del entorno (403). El MCP genera y muestra preview, pero no hay forma de
+    persistir los bytes aquí (las descargas van por esos hosts; el MCP solo expone
+    docs como recursos). Resolver: ejecutar `assets/scenes/council-round-table/fetch.sh`
+    desde una máquina con egress a PixelLab, o añadir esos hosts al allowlist. Tras
+    soltar los PNG, la escena los usa sin tocar código.
 
 - **2026-06-26 · Fase 7 — Integración, seguridad y pulido · DoD CUMPLIDO.**
   - **Seguridad (07-security.md):** revisión sin fugas — `health.py` solo devuelve

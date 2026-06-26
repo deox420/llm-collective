@@ -18,6 +18,11 @@ export default function InteractiveScene({ mode, busy, data }) {
   const working = !!here
   const detail = selected ? theme.detailFor(selected, data) : null
 
+  const sprites = theme.assets?.sprites || {}
+  const tableSprite = theme.assets?.table || null
+  const scrollSprite = theme.assets?.scroll || null
+  const showScroll = !!scrollSprite && !!data?.final  // pergamino del veredicto (etapa done)
+
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative', zIndex: 1 }}>
       <div data-scroll style={{ flex: 1, overflowY: 'auto', minWidth: 0, padding: '20px 24px' }}>
@@ -30,14 +35,22 @@ export default function InteractiveScene({ mode, busy, data }) {
           </div>
 
           <div className={`iscene ${working ? 'iscene-working' : ''}`}>
-            {/* nodo central (mesa / reunión / mostrador) */}
-            <div className="iscene-center">
-              <span>{theme.centerLabel}</span>
-            </div>
-            {/* personajes-placeholder posicionados por el layout del tema */}
+            {/* nodo central (mesa / reunión / mostrador). Sprite real si existe. */}
+            {tableSprite ? (
+              <div className="iscene-center iscene-center-sprite">
+                <img src={tableSprite} alt={theme.centerLabel} aria-hidden />
+                {showScroll && <img className="iscene-scroll" src={scrollSprite} alt="veredicto" />}
+              </div>
+            ) : (
+              <div className="iscene-center">
+                <span>{theme.centerLabel}</span>
+              </div>
+            )}
+            {/* personajes posicionados por el layout del tema: sprite real o placeholder */}
             {theme.agents.map((a) => {
               const pos = placements[a.id]
               const pose = theme.poseFor(a.id, ctx)
+              const sprite = sprites[a.id]
               return (
                 <button
                   key={a.id}
@@ -46,7 +59,9 @@ export default function InteractiveScene({ mode, busy, data }) {
                   onClick={() => setSelected(a.id)}
                   title={`${a.name} — clic para ver detalle`}
                 >
-                  <span className="iscene-fig" aria-hidden />
+                  {sprite
+                    ? <img className="iscene-sprite" src={sprite} alt={a.name} aria-hidden />
+                    : <span className="iscene-fig" aria-hidden />}
                   <span className="iscene-name">{a.name}</span>
                 </button>
               )
@@ -55,7 +70,9 @@ export default function InteractiveScene({ mode, busy, data }) {
 
           <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 12, textAlign: 'center' }}>
             Cada pose refleja la etapa real. Clic en un personaje para ver su contenido.
-            <br />Sprites pixel-art (PixelLab) pendientes: el render usa placeholders con el mismo contrato.
+            {!sprites[theme.agents[0].id] && (
+              <><br />Sprites pixel-art (PixelLab) pendientes: el render usa placeholders con el mismo contrato.</>
+            )}
           </p>
 
           {detail && (
