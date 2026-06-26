@@ -20,10 +20,11 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 1 — Núcleo común (`shared/`)
 
-- [ ] Completar y probar `call_model` para los cuatro prefijos (`cloud/`, `gpu/`, `local/`, `anthropic/`). Tests con un servidor Ollama mockeado (FR del router, ADR-0003).
-- [ ] Implementar el **gestor de concurrencia global**: un único modo activo a la vez; los demás bloqueados (FR de concurrencia, `12-frontend.md`).
-- [ ] Implementar el **emisor de eventos SSE de etapas** reutilizable por los tres modos (contrato en `13-interactive-scenes.md` §13.2 y `specs/api-spec.md`).
-- [ ] Modelo de configuración (qué modelo va a cada rol) leído de `shared/model_config.py` vía `MODEL_PROFILE`, no hardcodeado. Las apps importan `COUNCIL_MODELS`, `CHAIRMAN_MODEL`, `DEVTEAM_ROLES`, `EMBEDDINGS_MODEL` de ahí.
+- [x] Completar y probar `call_model` para los cuatro prefijos (`cloud/`, `gpu/`, `local/`, `anthropic/`). Tests con un servidor Ollama mockeado (FR del router, ADR-0003).
+- [x] Implementar el **gestor de concurrencia global**: un único modo activo a la vez; los demás bloqueados (FR de concurrencia, `12-frontend.md`). _(Diverge de SDD §12.4; registrado en ADR-0008.)_
+- [x] Implementar el **emisor de eventos SSE de etapas** reutilizable por los tres modos (contrato en `13-interactive-scenes.md` §13.2 y `specs/api-spec.md`).
+- [x] Modelo de configuración (qué modelo va a cada rol) leído de `shared/model_config.py` vía `MODEL_PROFILE`, no hardcodeado. Las apps importan `COUNCIL_MODELS`, `CHAIRMAN_MODEL`, `DEVTEAM_ROLES`, `EMBEDDINGS_MODEL` de ahí.
+- [ ] **(Bloqueado)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. Requiere `OLLAMA_CLOUD_API_KEY` en `.env`.
 
 **DoD:** tests del router pasan; un test demuestra que iniciar un segundo modo mientras otro corre devuelve "bloqueado"; los eventos SSE se emiten en orden de etapa.
 
@@ -124,3 +125,25 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     (extras pesados diferidos por fase) es de empaquetado, no de arquitectura.
   - **Pendiente para Fase 1:** verificar contra mi cuenta de Ollama Cloud que los
     nombres de modelo del perfil `cloud_only` existen de verdad y ajustarlos si no.
+
+- **2026-06-26 · Fase 1 — Núcleo común · DoD CUMPLIDO; 1 subtarea bloqueada.**
+  - `call_model` refactorizado con `destination_for()` (helper de prefijo→destino) y
+    cubierto por tests con `httpx.MockTransport` para los 4 destinos: enrutado a host
+    correcto, nombre sin prefijo, Bearer en cloud, RuntimeError si falta `GPU_HOST`,
+    ValueError en prefijo desconocido, y adaptación Anthropic (system separado +
+    max_tokens). (TC-1, TC-2, FR-1, ADR-0003).
+  - `shared/concurrency.py`: gestor global de modo único (`ConcurrencyManager` singleton).
+    Un segundo modo mientras otro corre → `ModeBusyError` ("bloqueado"); context manager
+    `run()` libera siempre. **Divergencia con SDD §12.4 (carriles paralelos) registrada
+    en ADR-0008** y señalada para revisión del SDD.
+  - `shared/sse.py`: `StageEmitter` reutilizable (cola async para StreamingResponse) con
+    el contrato de etapas §13.2 (stage:start/done, agent:active/waiting, handoff,
+    session:done, mode:locked) + `emit()` libre para los eventos concretos de api-spec.
+    Hace cumplir el orden de etapas (emitir fuera de orden lanza ValueError).
+  - Integridad de config: test parametrizado que valida que TODO model id de TODOS los
+    perfiles tiene prefijo enrutable; `cloud_only` es 100% `cloud/`.
+  - Tests: **30 verdes** (`uv run pytest`). DoD de Fase 1 cumplido (router, bloqueo de
+    2º modo, SSE en orden).
+  - **BLOQUEADO:** verificación de que los nombres de modelo del perfil existen en la
+    cuenta de Ollama Cloud. Herramienta lista (`shared/verify_models.py`) pero requiere
+    `OLLAMA_CLOUD_API_KEY` en `.env`. **Falta la clave del usuario.**
