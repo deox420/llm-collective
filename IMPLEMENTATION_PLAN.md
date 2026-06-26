@@ -253,3 +253,53 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     conectado y `api.pixellab.ai` está bloqueado por egress (403). Como prevé el SDD
     (§13.5), se usan placeholders con el mismo contrato; sustituirlos por los sprites
     es solo cambiar `assets`. 63 tests backend siguen verdes; build de frontend verde.
+
+---
+
+## 🔖 PUNTO DE RETOMA (2026-06-26)
+
+**Dónde retomar:** Fases 0–6 cerradas y pusheadas (rama
+`claude/llm-collective-phase-0-2947fb`, PR #1). Falta la **Fase 7** y desbloquear
+las corridas reales. Empezar por la Fase 7.
+
+### Estado por fase
+- **0–5 ✅** núcleo + las 3 verticales (Council, Dev Team, Second Brain) end-to-end.
+- **6 ✅ (parcial)** vista interactiva con contrato `SceneTheme` + placeholders;
+  faltan los sprites de PixelLab (bloqueados, ver abajo).
+- **7 ⏳ PENDIENTE** — integración, seguridad y pulido.
+
+### Cómo arrancar el proyecto
+```bash
+uv sync --extra devteam --extra secondbrain   # backend completo
+uv run pytest                                  # 63 tests verdes
+uv run uvicorn app:app --reload                # backend :8000
+cd frontend && npm install && npm run dev      # frontend :5173 (proxy a :8000)
+```
+
+### Arquitectura ya construida (para orientarse)
+- `shared/`: `model_router.py` (call_model + embed_*), `concurrency.py` (lock modo
+  único), `sse.py` (StageEmitter), `conversations.py`, `model_config.py`,
+  `backend_loader.py` (carga paquetes con guion), `health.py`.
+- `app.py`: monta routers de council + devteam + secondbrain + demo/health/status.
+- `projects/council|dev-team|second-brain/backend/`: orquestadores + routers.
+- `frontend/src/`: `App.jsx` (shell con diseño Claude Design), `scenes.js` +
+  `InteractiveScene.jsx` (Fase 6), `api.js`, `ParticleField.jsx`, `Icons.jsx`.
+- ADRs nuevos: **0008** (concurrencia modo único, diverge de SDD §12.4),
+  **0009** (sandbox subprocess en vez de Docker).
+
+### ⛔ Bloqueos del ENTORNO (no del código) — resolver en local o con allowlist
+1. **`ollama.com` (403 egress):** no se pueden hacer corridas reales de modelos ni
+   `uv run python -m shared.verify_models`. Verificado todo con modelos *faked*.
+   La clave de Ollama ya está en `.env` (local, gitignored).
+2. **`api.pixellab.ai` (403 egress) + MCP de PixelLab no conectado:** no se pueden
+   generar los sprites. Hacerlo en Claude Desktop/Code local (ver `ASSETS.md §3`) y
+   colocar en `assets/scenes/council-round-table/`; luego apuntar `assets` en
+   `frontend/src/scenes.js`.
+
+### Fase 7 — tareas pendientes (lo que toca)
+- [ ] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs,
+      validación de entradas, sandbox revisado.
+- [ ] Suite completa según `specs/test-plan.md`; cobertura de orquestación.
+- [ ] README de cada app (`projects/*/README.md`) con cómo arrancar/configurar.
+- [ ] Revisar costes/operación (`08-costs.md`, `09-operations.md`) + notas de despliegue.
+- [ ] Verificación final FR/NFR/CON: cada requisito con implementación o anotado.
