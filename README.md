@@ -14,6 +14,23 @@ Los tres comparten frontend (estilo Karpathy), backend FastAPI y una única capa
 
 ---
 
+## 📦 Estado del repositorio
+
+**Ya hay un push principal de la implementación.** El código vive en la rama
+`claude/llm-collective-phase-0-2947fb`, con un **Pull Request abierto (#1)** hacia `main`.
+
+- **Hecho y pusheado:** Fases 0–6 — núcleo común, las tres verticales (Council, Dev
+  Team, Second Brain) end-to-end, el shell con el diseño de Claude Design y la vista
+  interactiva (contrato `SceneTheme` con placeholders). **63 tests backend en verde.**
+- **Pendiente:** Fase 7 (integración, seguridad y pulido) y dos cosas que dependen
+  del entorno (ver `IMPLEMENTATION_PLAN.md → 🔖 PUNTO DE RETOMA`):
+  - corridas reales contra Ollama Cloud (egress a `ollama.com` bloqueado en el entorno de build);
+  - sprites pixel-art de PixelLab (egress a `api.pixellab.ai` bloqueado / MCP no conectado).
+
+El detalle fase a fase está en [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) (bitácora).
+
+---
+
 ## Arquitectura común
 
 El reparto de cómputo por defecto:
