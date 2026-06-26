@@ -55,6 +55,8 @@ Este SDD no es un único documento, sino un cuerpo de documentación de ingenier
 - [ADR-0005 · LangGraph/CrewAI para el Dev Team](adr/0005-langgraph-for-devteam.md)
 - [ADR-0006 · Acceso remoto vía túnel, no puerto abierto](adr/0006-tunnel-not-open-port.md)
 - [ADR-0007 · PixelLab como pipeline de assets pixel-art](adr/0007-pixellab-assets.md)
+- [ADR-0008 · Concurrencia: un solo modo activo a la vez (lock global)](adr/0008-concurrencia-modo-unico-global.md)
+- [ADR-0009 · Sandbox del Dev Team: subprocess como backend por defecto](adr/0009-sandbox-subprocess-fallback.md)
 
 ### Diagramas (`diagrams/`)
 - C4: [contexto](diagrams/c4-context.md), [contenedores](diagrams/c4-container.md), [componentes](diagrams/c4-component.md)

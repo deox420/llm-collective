@@ -77,6 +77,18 @@ export async function runCouncilQuery(conversationId, content, { onEvent } = {})
   await consumeSSE(res, onEvent)
 }
 
+// Lanza una tarea real al Dev Team (SSE): role_start/role_output/tool_call/
+// test_result/loop_back/delivery + stage:start/done.
+export async function runDevteamTask(conversationId, content, { onEvent, maxIterations } = {}) {
+  const res = await fetch(`/api/devteam/${conversationId}/task`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content, max_iterations: maxIterations }),
+  })
+  await throwIfBusy(res)
+  await consumeSSE(res, onEvent)
+}
+
 export async function fetchHealth() {
   const r = await fetch('/api/health')
   return r.json()

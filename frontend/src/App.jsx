@@ -3,7 +3,7 @@ import {
   ACCENTS, ACCENT_RGB, MODE_ORDER, TITLES, LANES, THEME_VARS,
   STAGES_BY_MODE, STAGE_LABELS, stageLabel, COMPOSER_PLACEHOLDER, COMPOSER_LANE, SAMPLE_HISTORY,
 } from './theme.js'
-import { ModeBusyError, createConversation, fetchHealth, runCouncilQuery, runMode } from './api.js'
+import { ModeBusyError, createConversation, fetchHealth, runCouncilQuery, runDevteamTask, runMode } from './api.js'
 import ParticleField from './ParticleField.jsx'
 import { Icon } from './Icons.jsx'
 
@@ -20,6 +20,7 @@ export default function App() {
   const [toast, setToast] = useState(null)      // {mode}
   const [council, setCouncil] = useState(null)  // {opinions, reviews, final}
   const [councilError, setCouncilError] = useState(null)
+  const [devteam, setDevteam] = useState(null)  // {plan, code, review, tests[], files[], iterations, error}
   const [histories, setHistories] = useState({ council: [], devteam: [], brain: [] })
   const [composer, setComposer] = useState('')
   const [health, setHealth] = useState(null)
@@ -63,6 +64,34 @@ export default function App() {
     } finally { setBusy(null) }
   }, [showToast])
 
+  const startDevteam = useCallback(async (task) => {
+    if (busyRef.current) { showToast(busyRef.current.mode); return }
+    setDevteam({ plan: '', code: '', review: '', tests: [], files: [], iterations: 0, error: null })
+    setBusy({ mode: 'devteam', stages: STAGES_BY_MODE.devteam, done: [], current: null })
+    try {
+      const conv = await createConversation('dev-team')
+      await runDevteamTask(conv.id, task, {
+        onEvent: ({ event, data }) => {
+          if (event === 'stage:start') setBusy((b) => b && { ...b, current: data.stage })
+          else if (event === 'stage:done') setBusy((b) => b && { ...b, done: [...new Set([...b.done, data.stage])], current: null })
+          else if (event === 'role_output') setDevteam((d) => {
+            if (data.role === 'architect') return { ...d, plan: data.content }
+            if (data.role === 'programmer') return { ...d, code: data.content }
+            if (data.role === 'reviewer') return { ...d, review: data.content }
+            return d
+          })
+          else if (event === 'test_result') setDevteam((d) => ({ ...d, tests: [...d.tests, data], iterations: data.iteration }))
+          else if (event === 'delivery') setDevteam((d) => ({ ...d, files: data.files, passed: data.tests_passed }))
+          else if (event === 'model_error') setDevteam((d) => ({ ...d, error: `Modelo no disponible (${data.code}). ¿Acceso a Ollama Cloud?` }))
+        },
+      })
+      setHistories((h) => ({ ...h, devteam: [{ id: `dt-${h.devteam.length + 1}`, title: task.slice(0, 42) }, ...h.devteam] }))
+    } catch (e) {
+      if (e instanceof ModeBusyError) showToast(e.activeMode || 'devteam')
+      else setDevteam((d) => ({ ...(d || {}), error: 'No se pudo completar la tarea (¿backend y modelos disponibles?).' }))
+    } finally { setBusy(null) }
+  }, [showToast])
+
   const startDemo = useCallback(async (m) => {
     if (busyRef.current) { showToast(busyRef.current.mode); return }
     setBusy({ mode: m, stages: STAGES_BY_MODE[m], done: [], current: null })
@@ -92,6 +121,7 @@ export default function App() {
     if (busyRef.current) { showToast(busyRef.current.mode); return }
     setComposer('')
     if (mode === 'council') startCouncil(text)
+    else if (mode === 'devteam') startDevteam(text)
     else startDemo(mode)
   }
 
@@ -119,7 +149,7 @@ export default function App() {
         />
         {mode === 'hub' && <Hub busy={busy} onSelect={selectMode} />}
         {mode === 'council' && <CouncilView council={council} error={councilError} busy={busy} tab={councilTab} onTab={setCouncilTab} panelOpen={panelOpen} />}
-        {mode === 'devteam' && <DevTeamView busy={busy} panelOpen={panelOpen} />}
+        {mode === 'devteam' && <DevTeamView busy={busy} panelOpen={panelOpen} result={devteam} />}
         {mode === 'brain' && <BrainView busy={busy} panelOpen={panelOpen} accent={accent} />}
         {mode !== 'hub' && (
           <Composer
@@ -373,26 +403,59 @@ function CouncilView({ council, error, busy, tab, onTab, panelOpen }) {
 }
 
 /* ============================ DEV TEAM ============================ */
-function DevTeamView({ busy, panelOpen }) {
+function DevTeamView({ busy, panelOpen, result }) {
   const roles = STAGES_BY_MODE.devteam
   const labels = { architect: 'arquitecto', programmer: 'programador', reviewer: 'revisor', tester: 'tester' }
-  // Estado del pipeline a partir del run real (demo) o por defecto.
-  const statusOf = (r) => {
+  const r = result || {}
+  const hasRun = busy?.mode === 'devteam' || r.plan || r.code || (r.tests && r.tests.length) || r.error
+  const statusOf = (role) => {
     if (busy?.mode === 'devteam') {
-      if (busy.done.includes(r)) return 'done'
-      if (busy.current === r) return 'running'
+      if (busy.done.includes(role)) return 'done'
+      if (busy.current === role) return 'running'
       return 'pending'
     }
-    return { architect: 'done', programmer: 'running', reviewer: 'pending', tester: 'pending' }[r]
+    if (r.files && r.files.length) return 'done'
+    return 'pending'
   }
+  const roleTag = (label) => ({ fontFamily: MONO, fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'color-mix(in oklab,var(--accent) 14%,var(--surface))', color: 'var(--accent)' })
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative', zIndex: 1 }}>
       <div data-scroll style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '26px 24px 24px' }}>
+          {!hasRun && (
+            <div style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '60px 0' }}>
+              <div style={{ fontSize: 18, color: 'var(--text)', marginBottom: 6 }}>El equipo está listo.</div>
+              <div style={{ fontSize: 14 }}>Describe una tarea de código: arquitecto → programador → revisor → tester (con bucle de corrección).</div>
+            </div>
+          )}
+          {r.error && <Banner>{r.error}</Banner>}
           {busy?.mode === 'devteam' && <RunningStrip stages={busy.stages} done={busy.done} current={busy.current} label="El equipo está trabajando" />}
-          <div style={{ marginTop: 16, fontSize: 13.5, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-            Vista previa del Dev Team. El pipeline real (LangGraph + sandbox) llega en la Fase 4; por ahora el panel refleja el avance por etapas.
-          </div>
+          {r.plan && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><span style={roleTag()}>arquitecto</span><span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>plan</span></div>
+              <div style={{ fontSize: 14, lineHeight: 1.62, whiteSpace: 'pre-wrap' }}>{r.plan}</div>
+            </div>
+          )}
+          {r.code && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><span style={roleTag()}>programador</span><span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>código</span></div>
+              <pre style={{ margin: 0, padding: '13px 14px', fontFamily: MONO, fontSize: 12.5, lineHeight: 1.7, overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--surface)', whiteSpace: 'pre-wrap' }}>{r.code}</pre>
+            </div>
+          )}
+          {r.review && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><span style={roleTag()}>revisor</span></div>
+              <div style={{ fontSize: 14, lineHeight: 1.62, whiteSpace: 'pre-wrap' }}>{r.review}</div>
+            </div>
+          )}
+          {r.tests && r.tests.map((t, i) => (
+            <div key={i} style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: t.passed ? 'color-mix(in oklab,#3f9a6a 16%,var(--surface))' : 'color-mix(in oklab,#e0673c 16%,var(--surface))', color: t.passed ? '#3f9a6a' : '#e0673c', border: `1px solid ${t.passed ? 'color-mix(in oklab,#3f9a6a 40%,transparent)' : 'color-mix(in oklab,#e0673c 40%,transparent)'}` }}>
+                tester · iter {t.iteration} · {t.passed ? 'OK' : 'falla'}
+              </span>
+              <span style={{ color: 'var(--text-dim)', fontFamily: MONO, fontSize: 12 }}>{t.summary}</span>
+            </div>
+          ))}
         </div>
       </div>
       {panelOpen && (

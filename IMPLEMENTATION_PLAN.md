@@ -57,13 +57,13 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 4 — Dev Team (vertical completa)
 
-- [ ] Backend: pipeline LangGraph architect → programmer → reviewer → tester (ADR-0005, `05-dev-team.md`).
-- [ ] Herramientas reales con **sandbox** para ejecutar/probar código de forma aislada (`07-security.md`).
-- [ ] Bucle de retorno tester→programmer cuando fallan los tests.
-- [ ] Emisión de etapas por SSE; frontend vista Chat con el código en streaming.
-- [ ] Tests: el pipeline avanza, el retorno funciona, el sandbox contiene la ejecución.
+- [x] Backend: pipeline LangGraph architect → programmer → reviewer → tester (ADR-0005, `05-dev-team.md`).
+- [x] Herramientas reales con **sandbox** para ejecutar/probar código de forma aislada (`07-security.md`). _(Backend subprocess; Docker pendiente, ADR-0009.)_
+- [x] Bucle de retorno tester→programmer cuando fallan los tests.
+- [x] Emisión de etapas por SSE; frontend vista Chat con el código en streaming.
+- [x] Tests: el pipeline avanza, el retorno funciona, el sandbox contiene la ejecución.
 
-**DoD:** una tarea de programación produce código probado por el pipeline; el sandbox impide efectos fuera de él; tests verdes.
+**DoD:** una tarea de programación produce código probado por el pipeline; el sandbox impide efectos fuera de él; tests verdes. _(Verificado: el tester ejecuta pytest REAL en el sandbox; loop iter1 falla → iter2 pasa. Con modelos faked por el bloqueo de egress a ollama.com.)_
 
 ---
 
@@ -201,3 +201,23 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
   - Doc 13 → v1.1 (§13.1-bis) y reparto de herramientas en CLAUDE.md. Build verde;
     45 tests backend. La vista interactiva pixel-art (escenas/personajes) sigue siendo
     de PixelLab en la Fase 6; este diseño cubre la UI del shell.
+
+- **2026-06-26 · Fase 4 — Dev Team (vertical completa) · DoD CUMPLIDO.**
+  - `projects/dev-team/backend/sandbox.py`: sandbox de ejecución (workdir efímero,
+    validación de rutas anti-escape, RLIMIT_CPU/FSIZE + timeout, entorno sin secretos).
+    Backend **subprocess** por no haber Docker en el entorno → **ADR-0009** (señala la
+    diferencia con NFR-4; interfaz lista para Docker).
+  - `pipeline.py`: grafo **LangGraph** architect→programmer→reviewer→tester con bucle
+    de corrección (tester real ejecuta pytest; vuelve al programador si falla, tope
+    `MAX_FIX_ITERATIONS`). Todo LLM por `call_model`; modelos de `model_config`. Emite
+    eventos api-spec (role_start/role_output/tool_call/test_result/loop_back/delivery)
+    + contrato de etapas.
+  - `router.py`: `POST /api/devteam/{cid}/task` (SSE) bajo el lock global; persiste
+    `stage_data` (iterations, roles, files, tests_passed). Cargado vía
+    `shared/devteam_loader.py` (el guion de `dev-team` impide el import por puntos).
+  - Frontend: `DevTeamView` real (plan, código, revisión, resultados de tests con
+    badges OK/falla por iteración) + panel de pipeline animado por etapas.
+  - Tests: **54 verdes** — sandbox rechaza escapes de ruta (TC-D4), corre pytest real,
+    pipeline avanza, **loop_back** tras fallo y luego pasa, tope de iteraciones (FR-D4),
+    endpoint SSE + persistencia. Verificación visual con Playwright (iter1 falla →
+    iter2 OK), modelos faked por el bloqueo de egress.
