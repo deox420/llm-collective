@@ -32,12 +32,12 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 
 ## Fase 2 — Shell de frontend común
 
-- [ ] Crear `frontend/` con Vite + React.
-- [ ] Sidebar con los tres modos como carpetas colapsables + Hub, con historial de conversación por modo (`12-frontend.md`).
-- [ ] Recoloreado de **toda la pestaña** según el acento del modo (Hub indigo, Council teal, Dev Team coral/amber, Second Brain púrpura) con cross-fade 200–300 ms.
-- [ ] Indicador de modo ocupado: punto pulsante + bloqueo de los otros modos con mensaje no-bloqueante y **barra de progreso por etapas**.
-- [ ] Toggle de las dos vistas (Chat / Interactiva) en la cabecera.
-- [ ] Cliente SSE que consume los eventos de etapa del backend.
+- [x] Crear `frontend/` con Vite + React.
+- [x] Sidebar con los tres modos como carpetas colapsables + Hub, con historial de conversación por modo (`12-frontend.md`).
+- [x] Recoloreado de **toda la pestaña** según el acento del modo (Hub indigo, Council teal, Dev Team coral/amber, Second Brain púrpura) con cross-fade 200–300 ms.
+- [x] Indicador de modo ocupado: punto pulsante + bloqueo de los otros modos con mensaje no-bloqueante y **barra de progreso por etapas**. _(Bloqueo global de modo único, coherente con ADR-0008.)_
+- [x] Toggle de las dos vistas (Chat / Interactiva) en la cabecera.
+- [x] Cliente SSE que consume los eventos de etapa del backend (vía `POST /api/demo/{mode}/run`).
 
 **DoD:** se navega entre los tres modos, el color tiñe toda la UI, y un modo "ocupado" simulado bloquea los otros con barra por etapas.
 
@@ -149,3 +149,22 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     `.env`, pero **la política de egress del entorno remoto bloquea `ollama.com` (403
     del proxy)**. No se puede sortear (instrucción del proxy). Resolver ejecutando la
     utilidad en local o añadiendo `ollama.com` al allowlist del entorno.
+
+- **2026-06-26 · Fase 2 — Shell de frontend común · DoD CUMPLIDO.**
+  - `frontend/` con Vite + React (build de producción verde, 38 módulos). Proxy de
+    `/api` y `/health` al backend `:8000` en desarrollo.
+  - Shell: `Sidebar` (Hub + 3 modos como carpetas colapsables con historial por modo),
+    `Header` (toggle Chat/Interactiva + perfil activo), `ChatView`, `InteractiveView`
+    (escena placeholder que refleja la etapa real; sprites PixelLab llegan en Fase 6),
+    `StageProgress` (barra por ETAPAS, sin ETA).
+  - Recoloreado total por contexto vía variables CSS con cross-fade ~250 ms (Hub índigo,
+    Council teal, Dev Team coral, Second Brain púrpura).
+  - Concurrencia en UI coherente con ADR-0008: un modo ocupado muestra punto pulsante
+    y **bloquea los demás** (banner no bloqueante + botón deshabilitado), con barra por
+    etapas en vivo. `prefers-reduced-motion` desactiva animaciones (NFR-INT-1).
+  - Backend: `POST /api/demo/{mode}/run` (SSE) que ejerce el lock global + `StageEmitter`
+    (etapas reales por modo), `GET /api/status`. 409 `mode_busy` si ocupado.
+  - Verificación: build verde; smoke end-to-end con Playwright/Chromium (capturas de
+    Hub, Council corriendo, Dev Team bloqueado, vista interactiva) + prueba de stack
+    (council corriendo → devteam 409 → etapas en orden → lock liberado).
+  - Tests backend: **34 verdes** (incluye `tests/test_demo_endpoint.py`).
