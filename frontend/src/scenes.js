@@ -44,9 +44,9 @@ function brainAsset(name) { return pick(brainFiles, name) }
 // Posiciones de los PIES de cada personaje (sprite anclado abajo) al borde de la mesa.
 const COUNCIL_SEATS = {
   king: { x: 50, y: 50, face: 'S' }, // cabecera (lado lejano), de frente a la mesa
-  A:    { x: 31, y: 63, face: 'E' }, // borde izquierdo, mira a la mesa
-  B:    { x: 69, y: 63, face: 'W' }, // borde derecho, mira a la mesa
-  C:    { x: 50, y: 84, face: 'N' }, // borde cercano (delante), mira a la mesa (estricta)
+  A:    { x: 27, y: 60, face: 'E' }, // junto al borde izquierdo (pies fuera, torso a la mesa)
+  B:    { x: 73, y: 60, face: 'W' }, // junto al borde derecho
+  C:    { x: 50, y: 89, face: 'N' }, // borde cercano (delante), pies justo bajo la mesa
 }
 const council = {
   id: 'council-round-table',
