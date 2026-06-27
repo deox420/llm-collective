@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { SCENE_THEMES } from './scenes.js'
 
-// Vista interactiva (placeholder, Fase 6). Consume el SceneTheme (§13.4) y refleja
-// el estado REAL del pipeline: la pose de cada agente sale de la etapa/datos reales
-// (no animación falsa). Clic en un personaje → su contenido real (§FR-INT-3).
-// Los sprites finales de PixelLab (ASSETS.md) sustituyen estos placeholders sin
-// tocar este componente (mismo contrato). Respeta prefers-reduced-motion (CSS).
+// Vista interactiva. Refleja el estado REAL del pipeline (regla de oro §13.2).
+//
+// Dos contratos conviven:
+//  - v2 (SDD §14.4): el tema expone choreography(state)→acción por agente y
+//    propsFor(state)→objetos dinámicos. Motor sentado/levantado (Council). El
+//    movimiento de marcha (Dev Team/Second Brain) llegará con sus temas v2.
+//  - v1 (doc 13 §13.4): layout(stage)+poseFor(agent) con sprites/placeholders
+//    (Dev Team y Second Brain, hasta que se rehagan a v2).
+//
+// Sin assets de PixelLab, todo cae a placeholders DOM/CSS con el mismo contrato.
+// prefers-reduced-motion desactiva animaciones por CSS (NFR-INT-1 / NFR-SCN-1).
 export default function InteractiveScene({ mode, busy, data }) {
   const theme = SCENE_THEMES[mode]
   const [selected, setSelected] = useState(null)
@@ -13,18 +19,10 @@ export default function InteractiveScene({ mode, busy, data }) {
 
   const here = busy?.mode === mode ? busy : null
   const stage = here?.current || null
-  const placements = theme.layout(stage)
-  const ctx = { stage, busy: here, data }
   const working = !!here
   const detail = selected ? theme.detailFor(selected, data) : null
-
-  const sprites = theme.assets?.sprites || {}
-  const anims = theme.assets?.anim || {}
   const background = theme.assets?.background || null
-  const decor = (theme.assets?.decor || []).filter((d) => d.src)
-  const tableSprite = theme.assets?.table || null
-  const scrollSprite = theme.assets?.scroll || null
-  const showScroll = !!scrollSprite && !!data?.final  // pergamino del veredicto (etapa done)
+  const isV2 = typeof theme.choreography === 'function'
 
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative', zIndex: 1 }}>
@@ -41,61 +39,13 @@ export default function InteractiveScene({ mode, busy, data }) {
             className={`iscene ${working ? 'iscene-working' : ''}`}
             style={background ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
           >
-            {/* props de ambiente (no interactivos), detrás de mesa y personajes */}
-            {decor.map((d) => (
-              <img
-                key={d.id}
-                className="iscene-decor"
-                src={d.src}
-                alt=""
-                aria-hidden
-                style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%` }}
-              />
-            ))}
-            {/* nodo central (mesa / reunión / mostrador). Sprite real si existe. */}
-            {tableSprite ? (
-              <div className="iscene-center iscene-center-sprite">
-                <img src={tableSprite} alt={theme.centerLabel} aria-hidden />
-                {showScroll && <img className="iscene-scroll" src={scrollSprite} alt="veredicto" />}
-              </div>
-            ) : (
-              <div className="iscene-center">
-                <span>{theme.centerLabel}</span>
-              </div>
-            )}
-            {/* personajes posicionados por el layout del tema: sprite real o placeholder */}
-            {theme.agents.map((a) => {
-              const pos = placements[a.id]
-              const pose = theme.poseFor(a.id, ctx)
-              const sprite = sprites[a.id]
-              const anim = anims[a.id]
-              // Reproduce la animación solo cuando el agente actúa de verdad
-              // (pose talk/active) y existe el spritesheet; si no, sprite estático.
-              const playing = anim && (pose === 'talk' || pose === 'active')
-              return (
-                <button
-                  key={a.id}
-                  className={`iscene-agent pose-${pose}`}
-                  style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--tint': a.tint }}
-                  onClick={() => setSelected(a.id)}
-                  title={`${a.name} — clic para ver detalle`}
-                >
-                  {playing
-                    ? <span className="iscene-anim" style={{ backgroundImage: `url(${anim})` }} aria-hidden />
-                    : sprite
-                      ? <img className="iscene-sprite" src={sprite} alt={a.name} aria-hidden />
-                      : <span className="iscene-fig" aria-hidden />}
-                  <span className="iscene-name">{a.name}</span>
-                </button>
-              )
-            })}
+            {isV2
+              ? <SceneV2 theme={theme} ctx={{ stage, working, data }} onSelect={setSelected} />
+              : <SceneV1 theme={theme} ctx={{ stage, busy: here, data }} onSelect={setSelected} />}
           </div>
 
           <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 12, textAlign: 'center' }}>
-            Cada pose refleja la etapa real. Clic en un personaje para ver su contenido.
-            {!sprites[theme.agents[0].id] && (
-              <><br />Sprites pixel-art (PixelLab) pendientes: el render usa placeholders con el mismo contrato.</>
-            )}
+            Cada acción refleja la etapa real. Clic en un personaje para ver su contenido.
           </p>
 
           {detail && (
@@ -110,5 +60,86 @@ export default function InteractiveScene({ mode, busy, data }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// --- v2: coreografía sentada (Council). Cada agente adopta una ACCIÓN derivada
+// del estado real; los pergaminos aparecen como props. Placeholders DOM/CSS hasta
+// que existan los sprites por acción/dirección (SDD §14.5). ---------------------
+function SceneV2({ theme, ctx, onSelect }) {
+  const chor = theme.choreography(ctx)
+  const props = theme.propsFor ? theme.propsFor(ctx) : []
+  return (
+    <>
+      {props.map((p) => (
+        <span key={p.id} className={`iscene-prop ${p.kind}`} style={{ left: `${p.x}%`, top: `${p.y}%` }} aria-hidden />
+      ))}
+      {theme.agents.map((a) => {
+        const m = chor[a.id] || { at: a, face: a.face, act: 'sit_idle' }
+        return (
+          <button
+            key={a.id}
+            className={`iscene-actor act-${m.act} face-${m.face} kind-${a.kind}`}
+            style={{ left: `${m.at.x}%`, top: `${m.at.y}%`, '--tint': a.tint }}
+            onClick={() => onSelect(a.id)}
+            title={`${a.name} — clic para ver detalle`}
+          >
+            <span className="iscene-fig2" aria-hidden />
+            <span className="iscene-name">{a.name}</span>
+          </button>
+        )
+      })}
+    </>
+  )
+}
+
+// --- v1: layout fijo + pose por agente, con sprites reales o placeholders
+// (Dev Team y Second Brain hasta su versión v2). --------------------------------
+function SceneV1({ theme, ctx, onSelect }) {
+  const placements = theme.layout(ctx.stage)
+  const sprites = theme.assets?.sprites || {}
+  const anims = theme.assets?.anim || {}
+  const decor = (theme.assets?.decor || []).filter((d) => d.src)
+  const tableSprite = theme.assets?.table || null
+  const scrollSprite = theme.assets?.scroll || null
+  const showScroll = !!scrollSprite && !!ctx.data?.final
+  return (
+    <>
+      {decor.map((d) => (
+        <img key={d.id} className="iscene-decor" src={d.src} alt="" aria-hidden
+          style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%` }} />
+      ))}
+      {tableSprite ? (
+        <div className="iscene-center iscene-center-sprite">
+          <img src={tableSprite} alt={theme.centerLabel} aria-hidden />
+          {showScroll && <img className="iscene-scroll" src={scrollSprite} alt="veredicto" />}
+        </div>
+      ) : (
+        <div className="iscene-center"><span>{theme.centerLabel}</span></div>
+      )}
+      {theme.agents.map((a) => {
+        const pos = placements[a.id]
+        const pose = theme.poseFor(a.id, ctx)
+        const sprite = sprites[a.id]
+        const anim = anims[a.id]
+        const playing = anim && (pose === 'talk' || pose === 'active')
+        return (
+          <button
+            key={a.id}
+            className={`iscene-agent pose-${pose}`}
+            style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--tint': a.tint }}
+            onClick={() => onSelect(a.id)}
+            title={`${a.name} — clic para ver detalle`}
+          >
+            {playing
+              ? <span className="iscene-anim" style={{ backgroundImage: `url(${anim})` }} aria-hidden />
+              : sprite
+                ? <img className="iscene-sprite" src={sprite} alt={a.name} aria-hidden />
+                : <span className="iscene-fig" aria-hidden />}
+            <span className="iscene-name">{a.name}</span>
+          </button>
+        )
+      })}
+    </>
   )
 }

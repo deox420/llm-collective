@@ -269,10 +269,10 @@ aparte). Los **3 caballeros sentados alrededor** de la mesa. Decoración del cas
 | `knight_C` | 50 | 72 | N (mira arriba, hacia la mesa) | frente inferior |
 | `scroll_*` | frente a cada personaje | — | pergamino sobre la mesa (prop por personaje) |
 
-> **Decisión de orientación abierta:** con vista top-down, el caballero inferior (`knight_C`)
-> mirando al norte mostraría la espalda. Propuesta: render en **¾ frontal** para que todas
-> las caras y los detalles se vean (recomendado para que "se vea bien"); alternativa,
-> orientación estricta (C de espaldas). A confirmar al pulir (F-S2).
+> **Orientación (decidido):** **estricta a la mesa** — cada personaje mira geométricamente
+> hacia la mesa según su asiento; el rey al sur (de frente), A al este, B al oeste, C al
+> norte (de espaldas a la cámara). **Idle (decidido):** **vivo** — respiración sutil en
+> reposo (animación `breathing-idle` o equivalente), desactivada por `prefers-reduced-motion`.
 
 **Coreografía por etapa (la mesa redonda, sentados):**
 | Etapa real (evento) | Qué pasa en escena |
@@ -291,8 +291,8 @@ al empezar `opinions`); `scroll_verdict` (pergamino sellado en el centro, aparec
 **Set de animaciones por personaje (mínimo):**
 | Personaje | Animaciones |
 |-----------|-------------|
-| Caballero A/B/C | `sit_idle`, `writing` (escribe en el pergamino), `stand_present` (se levanta y presenta), `vote` (gesto de voto, de pie) |
-| Rey | `sit_idle`, `stand_verdict` (se levanta y proclama, mano en alto) |
+| Caballero A/B/C | `breathing_idle`, `writing` (escribe en el pergamino), `stand_present` (se levanta y presenta), `vote` (gesto de voto, de pie) |
+| Rey | `breathing_idle`, `stand_verdict` (se levanta y proclama, mano en alto) |
 
 > "Si necesitas más de una animación para animar todo esto, sin problema" (usuario): el set
 > de arriba son **3–4 animaciones por caballero** y **2** del rey. Se generan en la

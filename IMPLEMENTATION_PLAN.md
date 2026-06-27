@@ -260,8 +260,19 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     Set de animaciones por personaje (sit_idle/writing/stand_present/vote; rey
     sit_idle/stand_verdict). Tabla de **proporciones** (§14.6.1-P, personaje=80px de
     referencia) y prompts de PixelLab **en inglés** (§14.6.1-A). Un solo estilo, a escala.
-  - Pendiente: ok del usuario al §14.6.1 (orientación ¾ frontal vs estricta; idle vivo) →
-    ejecutar F-S0 (motor) y F-S1/2 (Council). Placeholders v1 mientras tanto.
+  - **Decisiones del usuario:** orientación **estricta a la mesa**, **idle vivo**
+    (respiración), y **motor primero (F-S0)**.
+  - **F-S0 HECHO — motor de escena v2 cableado (placeholders).** `SceneTheme v2` en
+    `scenes.js` (Council): asientos+orientación fijos, `choreography(state)` deriva la
+    acción real (sit_idle/writing/stand_present/vote/stand_verdict) y `propsFor` coloca
+    los pergaminos. `InteractiveScene.jsx` ramifica v2 (Council) / v1 (devteam/brain);
+    CSS de actores sentados con respiración, levantarse, votar, veredicto dorado y props
+    de pergamino; `prefers-reduced-motion` lo congela. **Verificado con Playwright**: la
+    escena recorre idle → writing (aparecen 3 pergaminos) → vote → rey `stand_verdict` +
+    caballeros `stand_present`, todo disparado por las etapas reales del SSE. Build verde.
+  - Pendiente: F-S1 (generar los assets v2 de Council: 80px, 8-dir/orientación por
+    asiento, animaciones writing/stand/vote/verdict, fondo a escala, pergaminos) y F-S2
+    (cablear sprites sobre el motor + pulir). Placeholders mientras tanto.
 
 - **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
   - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council

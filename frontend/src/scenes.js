@@ -36,68 +36,62 @@ function councilAsset(name) { return pick(councilFiles, name) }
 function devteamAsset(name) { return pick(devteamFiles, name) }
 function brainAsset(name) { return pick(brainFiles, name) }
 
-// ---- Council: mesa redonda (3 caballeros A/B/C + rey chairman) -------------
+// ---- Council v2: mesa redonda, movimiento mínimo sentado (SDD §14.6.1) -----
+// Contrato SceneTheme v2: cada agente tiene asiento + orientación fijos; choreography
+// deriva la ACCIÓN de cada uno del estado REAL (sit_idle/writing/stand_present/vote/
+// stand_verdict) y propsFor coloca los pergaminos. No caminan (sentados). El motor
+// (InteractiveScene) anima sentarse↔levantarse y respeta prefers-reduced-motion.
+const COUNCIL_SEATS = {
+  king: { x: 50, y: 24, face: 'S' }, // trono a la cabecera, de frente a la mesa
+  A:    { x: 24, y: 50, face: 'E' }, // izquierda, mira a la mesa
+  B:    { x: 76, y: 50, face: 'W' }, // derecha, mira a la mesa
+  C:    { x: 50, y: 74, face: 'N' }, // frente inferior, mira a la mesa (orientación estricta)
+}
 const council = {
   id: 'council-round-table',
   mode: 'council',
   label: 'La mesa redonda',
-  centerLabel: 'Rey',
-  // Sprites reales si existen; null → placeholder. Nombres = convención ASSETS.md.
-  assets: {
-    sprites: {
-      A: councilAsset('knight-a.png'),
-      B: councilAsset('knight-b.png'),
-      C: councilAsset('knight-c.png'),
-      king: councilAsset('king.png'),
-    },
-    // Spritesheets de animación (tira horizontal, 6 frames de 60px). Si existen,
-    // se reproducen en las poses activas (talk/active); si no, sprite estático.
-    // Las genera fetch.sh ensamblando los frames de PixelLab (ver MANIFEST.md).
-    anim: {
-      A: councilAsset('knight-a.talk.png'),
-      B: councilAsset('knight-b.talk.png'),
-      C: councilAsset('knight-c.talk.png'),
-      king: councilAsset('king.synthesize.png'),
-    },
-    animFrames: 6,
-    table: councilAsset('table.png'),
-    scroll: councilAsset('scroll.png'),
-    // Ambiente: el fondo es el SALÓN completo (muros, puerta, braseros, suelo
-    // ajedrezado) generado en PixelLab; cubre todo el lienzo. Encima va solo la
-    // alfombra bajo la mesa para no recargar. `brazier/pillar/banner` se generan
-    // también (fetch.sh) como extras opcionales; añádelos aquí si los quieres.
-    background: councilAsset('background.png'),
-    decor: [
-      { id: 'rug', src: councilAsset('rug.png'), x: 50, y: 53, w: 58 },
-    ],
-  },
+  // El fondo del salón se usa si está descargado; si no, el motor pinta el degradado.
+  assets: { background: councilAsset('background.png') },
   agents: [
-    { id: 'A', kind: 'knight', name: 'Caballero A', tint: '#3b82c4' },
-    { id: 'B', kind: 'knight', name: 'Caballero B', tint: '#e0673c' },
-    { id: 'C', kind: 'knight', name: 'Caballero C', tint: '#3f9a6a' },
-    { id: 'king', kind: 'king', name: 'Rey · chairman', tint: '#e8b923' },
+    { id: 'king', kind: 'king', name: 'Rey · chairman', tint: '#e8b923', ...COUNCIL_SEATS.king },
+    { id: 'A', kind: 'knight', name: 'Caballero A', tint: '#3b82c4', ...COUNCIL_SEATS.A },
+    { id: 'B', kind: 'knight', name: 'Caballero B', tint: '#e0673c', ...COUNCIL_SEATS.B },
+    { id: 'C', kind: 'knight', name: 'Caballero C', tint: '#3f9a6a', ...COUNCIL_SEATS.C },
   ],
-  // posiciones (% del lienzo) alrededor de la mesa
-  layout() {
-    return {
-      A: { x: 26, y: 32 },
-      B: { x: 74, y: 32 },
-      C: { x: 26, y: 70 },
-      king: { x: 74, y: 70 },
-    }
-  },
-  poseFor(agentId, { stage, busy, data }) {
-    if (!busy && !data?.final) return POSE.IDLE
+  // Acción objetivo de cada agente según el estado REAL (regla de oro §13.2):
+  //   opinions → el que aún no ha opinado ESCRIBE; el que ya, se levanta a PRESENTAR.
+  //   review   → todos de pie VOTANDO. synthesis/final → el rey da el VEREDICTO.
+  choreography({ stage, working, data }) {
     const opinions = data?.opinions || []
-    if (agentId === 'king') {
-      if (stage === 'synthesis' || data?.final) return data?.final ? POSE.DONE : POSE.ACTIVE
-      return POSE.WAIT
+    const final = data?.final
+    const live = working || final
+    const idxOf = { A: 0, B: 1, C: 2 }
+    const out = {
+      king: { at: COUNCIL_SEATS.king, face: 'S', act: (stage === 'synthesis' || final) ? 'stand_verdict' : 'sit_idle' },
     }
-    const idx = { A: 0, B: 1, C: 2 }[agentId]
-    if (stage === 'opinions') return idx < opinions.length ? POSE.DONE : POSE.TALK
-    if (stage === 'review') return POSE.ACTIVE
-    if (stage === 'synthesis') return POSE.DONE
-    return opinions[idx] ? POSE.DONE : POSE.IDLE
+    for (const id of ['A', 'B', 'C']) {
+      let act = 'sit_idle'
+      if (live) {
+        if (stage === 'opinions') act = opinions[idxOf[id]] ? 'stand_present' : 'writing'
+        else if (stage === 'review') act = 'vote'
+        else if (stage === 'synthesis' || final) act = 'stand_present'
+      }
+      out[id] = { at: COUNCIL_SEATS[id], face: COUNCIL_SEATS[id].face, act }
+    }
+    return out
+  },
+  // Pergamino en blanco frente a cada caballero (opinions/review) y pergamino del
+  // veredicto al centro (final).
+  propsFor({ stage, working, data }) {
+    const final = data?.final
+    const props = []
+    const blanks = { A: { x: 33, y: 50 }, B: { x: 67, y: 50 }, C: { x: 50, y: 64 } }
+    if (working && (stage === 'opinions' || stage === 'review') && !final) {
+      for (const id of ['A', 'B', 'C']) props.push({ id: `scroll_${id}`, kind: 'scroll_blank', ...blanks[id] })
+    }
+    if (final) props.push({ id: 'scroll_verdict', kind: 'scroll_verdict', x: 50, y: 47 })
+    return props
   },
   detailFor(agentId, data) {
     if (agentId === 'king') {
