@@ -69,13 +69,29 @@ export default function InteractiveScene({ mode, busy, data }) {
 function SceneV2({ theme, ctx, onSelect }) {
   const chor = theme.choreography(ctx)
   const props = theme.propsFor ? theme.propsFor(ctx) : []
+  const A = theme.assets || {}
+  const table = A.table
+  const tablePos = A.tablePos || { x: 50, y: 58, w: 50 }
+  const scrolls = A.scrolls || {}
+  const sprites = A.sprites || {}
+  const anim = A.anim || {}
   return (
     <>
+      {/* mesa redonda (sprite real si existe), detrás de todo */}
+      {table && (
+        <img className="iscene-table" src={table} alt="" aria-hidden
+          style={{ left: `${tablePos.x}%`, top: `${tablePos.y}%`, width: `${tablePos.w}%` }} />
+      )}
+      {/* pergaminos: sprite real por tipo si existe, si no placeholder CSS */}
       {props.map((p) => (
-        <span key={p.id} className={`iscene-prop ${p.kind}`} style={{ left: `${p.x}%`, top: `${p.y}%` }} aria-hidden />
+        scrolls[p.kind]
+          ? <img key={p.id} className={`iscene-propimg ${p.kind}`} src={scrolls[p.kind]} alt="" aria-hidden style={{ left: `${p.x}%`, top: `${p.y}%` }} />
+          : <span key={p.id} className={`iscene-prop ${p.kind}`} style={{ left: `${p.x}%`, top: `${p.y}%` }} aria-hidden />
       ))}
       {theme.agents.map((a) => {
         const m = chor[a.id] || { at: a, face: a.face, act: 'sit_idle' }
+        const strip = anim[a.id]?.[m.act]      // tira de animación para esta acción
+        const sprite = sprites[a.id]           // sprite estático (frame de su dirección)
         return (
           <button
             key={a.id}
@@ -84,7 +100,11 @@ function SceneV2({ theme, ctx, onSelect }) {
             onClick={() => onSelect(a.id)}
             title={`${a.name} — clic para ver detalle`}
           >
-            <span className="iscene-fig2" aria-hidden />
+            {strip
+              ? <span className="iscene-actor-anim" style={{ backgroundImage: `url(${strip})` }} aria-hidden />
+              : sprite
+                ? <img className="iscene-actor-sprite" src={sprite} alt={a.name} aria-hidden />
+                : <span className="iscene-fig2" aria-hidden />}
             <span className="iscene-name">{a.name}</span>
           </button>
         )

@@ -209,6 +209,36 @@ button { font-family: inherit; }
 .iscene-prop.scroll_verdict { width: 22px; height: 18px; border-radius: 3px; background: #efe2c0; border: 1.5px solid #b9a771; }
 .iscene-prop.scroll_verdict::after { content: ''; position: absolute; right: 1px; bottom: 1px; width: 7px; height: 7px; border-radius: 50%; background: #c0392b; }
 
+/* v2 con sprites reales de PixelLab (cuando están descargados) */
+.iscene-table {
+  position: absolute; transform: translate(-50%, -50%); height: auto;
+  image-rendering: pixelated; z-index: 0; pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.3));
+}
+.iscene-actor-sprite {
+  display: block; width: 62px; height: auto; image-rendering: pixelated;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.35));
+  transition: transform .42s cubic-bezier(.22,1,.36,1), filter .3s ease;
+}
+.iscene-actor-anim {
+  display: block; width: 60px; height: 60px; background-repeat: no-repeat;
+  background-position: 0 0; image-rendering: pixelated;
+  animation: iscene-play6 .8s steps(6) infinite;
+}
+/* las acciones "de pie" levantan también el sprite/animación reales */
+.act-stand_present .iscene-actor-sprite, .act-stand_present .iscene-actor-anim,
+.act-vote .iscene-actor-sprite, .act-vote .iscene-actor-anim { transform: translateY(-10px); }
+.act-stand_verdict .iscene-actor-sprite, .act-stand_verdict .iscene-actor-anim {
+  transform: translateY(-12px);
+  filter: drop-shadow(0 0 8px color-mix(in oklab, #e8b923 60%, transparent));
+}
+.iscene-propimg {
+  position: absolute; transform: translate(-50%, -50%); z-index: 1;
+  image-rendering: pixelated; animation: llmc-pop 320ms ease-out;
+}
+.iscene-propimg.scroll_blank { width: 22px; }
+.iscene-propimg.scroll_verdict { width: 30px; }
+
 /* ── Accesibilidad: sin animación si el usuario lo pide (NFR-INT-1) ────── */
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

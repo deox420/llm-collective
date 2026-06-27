@@ -1,71 +1,68 @@
 #!/usr/bin/env bash
-# fetch.sh — descarga los assets pixel-art de Council desde PixelLab.
-# Ejecútalo desde una máquina con salida a *.pixellab.ai (el entorno remoto de
-# generación los bloquea por egress). Ver MANIFEST.md. Idempotente.
+# fetch.sh — assets v2 de Council (la mesa redonda, SDD §14.6.1) desde PixelLab.
+# Ejecútalo desde una máquina con salida a *.pixellab.ai (el entorno remoto los
+# bloquea por egress). Ver MANIFEST.md. Idempotente.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 CDN="https://backblaze.pixellab.ai/file/pixellab-characters/98e80c31-e06c-45b8-bbd0-0b02ba97d261"
 MCP="https://api.pixellab.ai/mcp"
 
-# Personajes: frame frontal (south). URL pública, sin auth.
-declare -A KNIGHTS=(
-  [knight-a.png]=c179c5ba-3960-44ac-b9cb-f538dc5f46b0
-  [knight-b.png]=984599ba-7768-4d67-b859-5c6f38652e99
-  [knight-c.png]=f4d10030-c67b-4645-9918-55e3342645b1
-  [king.png]=438e8a36-f8b2-4652-a3c7-0d9c80033e69
+# --- Personajes: frame en la dirección de su asiento (orientación estricta) ---
+#   king→south · A→east · B→west · C→north
+declare -A CHARS=(
+  [king.png]="7d68f799-2f80-41be-a203-6f5037797f69 south"
+  [knight-a.png]="72b307d0-7eb0-4dba-bdd7-e2e770adfb5e east"
+  [knight-b.png]="f704726a-8140-41d6-bb80-9869623231ac west"
+  [knight-c.png]="890a84a7-eed9-46c2-a6a8-9c67dd680ea5 north"
 )
-for out in "${!KNIGHTS[@]}"; do
+for out in "${!CHARS[@]}"; do
+  read -r cid dir <<< "${CHARS[$out]}"
   echo "↓ $out"
-  curl -fSL -o "$out" "$CDN/${KNIGHTS[$out]}/rotations/south.png"
+  curl -fSL -o "$out" "$CDN/$cid/rotations/$dir.png"
 done
 
-# Objetos de mapa: efímeros (~8 h). Requieren la API key. Si han expirado,
-# regenéralos con el MCP (ver MANIFEST.md) — no es un error fatal.
-if [ -n "${PIXELLAB_API_KEY:-}" ]; then
-  for pair in \
-    "table.png:6dfb4b19-d672-471e-87f3-8f089c3a2204" \
-    "scroll.png:3444c4b8-95e1-402e-834e-52c38bc9f7d7" \
-    "background.png:ea60b69b-35b0-487c-b45a-cfbdb5ab8a7e" \
-    "rug.png:bdbb3a40-eb5f-4c39-8b23-bec3ce3c4152" \
-    "brazier.png:b60f2881-6f76-4ee7-b1c3-9ffdaee30dd3" \
-    "pillar.png:f571cd98-0345-4028-a05d-79440900ca33" \
-    "banner.png:41700787-f306-4877-98ed-d86c9bd556de"; do
-    out="${pair%%:*}"; id="${pair##*:}"
-    echo "↓ $out (efímero)"
-    curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" \
-      -o "$out" "$MCP/map-objects/$id/download" || echo "  (expirado: regenera con create_map_object, ver MANIFEST.md)"
-  done
-else
-  echo "PIXELLAB_API_KEY no definida: omito los objetos de mapa (table/scroll/background/rug/brazier/pillar/banner; regenéralos con el MCP)."
-fi
-
-# Animaciones: frames south 1..6 → tira horizontal de 6×60px que la escena
-# reproduce con steps(6). URL pública: <char_id>/animations/<anim_id>/south/<n>.png.
-# Requiere ImageMagick (`convert`). Si no está, se omiten (la escena usa el sprite
-# estático con el halo CSS).
+# --- Animaciones: tira horizontal de 6×60px (frames 1..6) que el motor reproduce
+#     con steps(6). "char_id anim_id dir". Requiere ImageMagick (convert). ---------
 declare -A ANIM=(
-  [knight-a.talk.png]="c179c5ba-3960-44ac-b9cb-f538dc5f46b0 82b5cb62-748d-4b14-afd0-b13dac426915"
-  [knight-b.talk.png]="984599ba-7768-4d67-b859-5c6f38652e99 07a6b012-af04-43d8-b9e7-9d6a37ee2b17"
-  [knight-c.talk.png]="f4d10030-c67b-4645-9918-55e3342645b1 8eb4df6e-cba3-4f01-8f6c-4c3cb9fe24ab"
-  [king.synthesize.png]="438e8a36-f8b2-4652-a3c7-0d9c80033e69 9da7306a-c810-41fd-972f-ba820ad99e13"
+  [knight-a.writing.png]="72b307d0-7eb0-4dba-bdd7-e2e770adfb5e 3f6da357-78ac-474d-86bb-330f0e07c568 east"
+  [knight-a.present.png]="72b307d0-7eb0-4dba-bdd7-e2e770adfb5e c1bf69ee-3409-4968-a24b-27e7602de174 east"
+  [knight-b.writing.png]="f704726a-8140-41d6-bb80-9869623231ac f4774dc9-3036-41b3-b94d-07e0794fb46d west"
+  [knight-b.present.png]="f704726a-8140-41d6-bb80-9869623231ac e66a9d90-b63d-4c1c-ad87-abd8f7fd91c2 west"
+  [knight-c.writing.png]="890a84a7-eed9-46c2-a6a8-9c67dd680ea5 80434ccc-a2de-47e5-91f8-57e94d0c4061 north"
+  [knight-c.present.png]="890a84a7-eed9-46c2-a6a8-9c67dd680ea5 3975566b-2eb3-4619-932c-72180e57cbf7 north"
+  [king.verdict.png]="7d68f799-2f80-41be-a203-6f5037797f69 ad1c35f5-f5b6-4dd7-86a9-e9e08894c066 south"
 )
 if command -v convert >/dev/null 2>&1; then
   for out in "${!ANIM[@]}"; do
-    read -r cid aid <<< "${ANIM[$out]}"
-    case "$aid" in PENDING_*) echo "  ($out: anim_id pendiente; ver MANIFEST.md)"; continue;; esac
+    read -r cid aid dir <<< "${ANIM[$out]}"
     echo "↓ $out (animación)"
-    tmp="$(mktemp -d)"
-    ok=1
+    tmp="$(mktemp -d)"; ok=1
     for n in 1 2 3 4 5 6; do
-      curl -fSL -o "$tmp/$n.png" "$CDN/$cid/animations/$aid/south/$n.png" || ok=0
+      curl -fSL -o "$tmp/$n.png" "$CDN/$cid/animations/$aid/$dir/$n.png" || ok=0
     done
     [ "$ok" = 1 ] && convert "$tmp/1.png" "$tmp/2.png" "$tmp/3.png" "$tmp/4.png" "$tmp/5.png" "$tmp/6.png" \
       -background none -resize 60x60 +append "$out" || echo "  (frames incompletos: regenera, ver MANIFEST.md)"
     rm -rf "$tmp"
   done
 else
-  echo "ImageMagick (convert) no instalado: omito las tiras de animación (.talk/.synthesize)."
+  echo "ImageMagick (convert) no instalado: omito las tiras de animación (el motor usa el sprite estático con transform CSS)."
 fi
 
-echo "Listo. El frontend detecta los .png automáticamente (scenes.js)."
+# --- Objetos de mapa: efímeros (~8 h). Requieren la API key. ---------------------
+if [ -n "${PIXELLAB_API_KEY:-}" ]; then
+  for pair in \
+    "background.png:075a1f8d-5f34-4f7c-84df-3a04c0146dec" \
+    "table.png:8b38f18e-0f5d-4af8-af68-73f4273a248d" \
+    "scroll-blank.png:7fea9da1-7f9f-4871-9335-a6172c9468ec" \
+    "scroll-verdict.png:32adcc8a-493e-473b-928a-f4da8ebb3c7f"; do
+    out="${pair%%:*}"; id="${pair##*:}"
+    echo "↓ $out (efímero)"
+    curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" \
+      -o "$out" "$MCP/map-objects/$id/download" || echo "  (expirado: regenera, ver MANIFEST.md)"
+  done
+else
+  echo "PIXELLAB_API_KEY no definida: omito background/table/scroll-* (regenéralos con el MCP)."
+fi
+
+echo "Listo. El frontend detecta los .png automáticamente (scenes.js v2)."

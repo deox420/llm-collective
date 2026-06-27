@@ -270,9 +270,19 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     de pergamino; `prefers-reduced-motion` lo congela. **Verificado con Playwright**: la
     escena recorre idle → writing (aparecen 3 pergaminos) → vote → rey `stand_verdict` +
     caballeros `stand_present`, todo disparado por las etapas reales del SSE. Build verde.
-  - Pendiente: F-S1 (generar los assets v2 de Council: 80px, 8-dir/orientación por
-    asiento, animaciones writing/stand/vote/verdict, fondo a escala, pergaminos) y F-S2
-    (cablear sprites sobre el motor + pulir). Placeholders mientras tanto.
+  - **F-S1 HECHO — assets v2 de Council generados.** PixelLab (cuenta del usuario):
+    4 personajes 80px detallados, sentados en silla/trono **sin mesa** (orientación por
+    asiento: rey S, A E, B W, C N); animaciones `writing` y `stand_present` por caballero
+    (en su dirección) + `stand_verdict` del rey; **salón vacío** + **mesa redonda** como
+    sprite aparte + pergamino en blanco + pergamino del veredicto. Todo a escala, un solo
+    estilo. (Varios reintentos por carga alta de PixelLab: rey y un par de bases.)
+  - **Render v2 cableado a los sprites reales:** `scenes.js` carga sprite por personaje +
+    tira de animación por acción + mesa/fondo/pergaminos (todo tolerante: si falta el PNG,
+    placeholder). `InteractiveScene` pinta mesa, sprites/animaciones con transform por
+    acción, y pergaminos como sprite. `fetch.sh`+`MANIFEST` reescritos al set v2 (IDs +
+    ensamblado de tiras). Build verde. `vote`/`breathing_idle` los cubre el CSS.
+  - Pendiente **F-S2**: bajar los bytes (`fetch.sh`, bloqueado por egress aquí) y **afinar
+    posiciones/escala** viéndolos compuestos (COUNCIL_SEATS, tablePos, tamaños).
 
 - **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
   - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council
