@@ -42,10 +42,10 @@ function brainAsset(name) { return pick(brainFiles, name) }
 // stand_verdict) y propsFor coloca los pergaminos. No caminan (sentados). El motor
 // (InteractiveScene) anima sentarse↔levantarse y respeta prefers-reduced-motion.
 const COUNCIL_SEATS = {
-  king: { x: 50, y: 30, face: 'S' }, // trono a la cabecera, de frente a la mesa
-  A:    { x: 25, y: 56, face: 'E' }, // izquierda, mira a la mesa
-  B:    { x: 75, y: 56, face: 'W' }, // derecha, mira a la mesa
-  C:    { x: 50, y: 78, face: 'N' }, // frente inferior, mira a la mesa (orientación estricta)
+  king: { x: 50, y: 34, face: 'S' }, // trono a la cabecera, de frente a la mesa
+  A:    { x: 31, y: 56, face: 'E' }, // izquierda, mira a la mesa
+  B:    { x: 69, y: 56, face: 'W' }, // derecha, mira a la mesa
+  C:    { x: 50, y: 73, face: 'N' }, // frente inferior, mira a la mesa (orientación estricta)
 }
 const council = {
   id: 'council-round-table',
@@ -57,7 +57,7 @@ const council = {
   assets: {
     background: councilAsset('background.png'),
     table: councilAsset('table.png'),
-    tablePos: { x: 50, y: 60, w: 52 },
+    tablePos: { x: 50, y: 58, w: 38 },
     scrolls: { scroll_blank: councilAsset('scroll-blank.png'), scroll_verdict: councilAsset('scroll-verdict.png') },
     sprites: {
       king: councilAsset('king.png'),
@@ -106,11 +106,11 @@ const council = {
   propsFor({ stage, working, data }) {
     const final = data?.final
     const props = []
-    const blanks = { A: { x: 34, y: 56 }, B: { x: 66, y: 56 }, C: { x: 50, y: 71 } }
+    const blanks = { A: { x: 39, y: 56 }, B: { x: 61, y: 56 }, C: { x: 50, y: 68 } }
     if (working && (stage === 'opinions' || stage === 'review') && !final) {
       for (const id of ['A', 'B', 'C']) props.push({ id: `scroll_${id}`, kind: 'scroll_blank', ...blanks[id] })
     }
-    if (final) props.push({ id: 'scroll_verdict', kind: 'scroll_verdict', x: 50, y: 58 })
+    if (final) props.push({ id: 'scroll_verdict', kind: 'scroll_verdict', x: 50, y: 56 })
     return props
   },
   detailFor(agentId, data) {

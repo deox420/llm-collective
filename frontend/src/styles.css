@@ -216,7 +216,7 @@ button { font-family: inherit; }
   filter: drop-shadow(0 3px 4px rgba(0,0,0,.3));
 }
 .iscene-actor-sprite {
-  display: block; width: 62px; height: auto; image-rendering: pixelated;
+  display: block; width: 76px; height: auto; image-rendering: pixelated;
   filter: drop-shadow(0 3px 3px rgba(0,0,0,.35));
   transition: transform .42s cubic-bezier(.22,1,.36,1), filter .3s ease;
 }

@@ -281,8 +281,17 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     placeholder). `InteractiveScene` pinta mesa, sprites/animaciones con transform por
     acción, y pergaminos como sprite. `fetch.sh`+`MANIFEST` reescritos al set v2 (IDs +
     ensamblado de tiras). Build verde. `vote`/`breathing_idle` los cubre el CSS.
-  - Pendiente **F-S2**: bajar los bytes (`fetch.sh`, bloqueado por egress aquí) y **afinar
-    posiciones/escala** viéndolos compuestos (COUNCIL_SEATS, tablePos, tamaños).
+  - **F-S2 HECHO — assets descargados, compuestos y afinados.** El egress a
+    `api.pixellab.ai` se abrió (solo `backblaze` seguía bloqueado), así que se bajaron los
+    bytes por los endpoints de descarga del MCP (zip de personaje + PNG de objetos) con
+    `PIXELLAB_API_KEY`, ensamblando las tiras de animación con Pillow. **Los PNG reales
+    están commiteados** en `assets/scenes/council-round-table/`. Verificado con
+    Playwright: la escena compuesta (salón + mesa + 4 personajes) se ve bien; afinadas
+    posiciones (`COUNCIL_SEATS`), tamaño de mesa (`tablePos.w=38`) y de personaje (76px) a
+    proporción. Estados reales OK: idle/writing/vote/stand_present + rey `stand_verdict`
+    con brillo dorado. Build verde.
+  - **Council v2 COMPLETO.** Pendiente solo pulido fino con feedback del usuario y luego
+    replicar el patrón en Dev Team y Second Brain.
 
 - **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
   - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council
