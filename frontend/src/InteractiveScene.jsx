@@ -37,7 +37,7 @@ export default function InteractiveScene({ mode, busy, data }) {
 
           <div
             className={`iscene ${working ? 'iscene-working' : ''}`}
-            style={background ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+            style={background ? { backgroundImage: `url(${background})`, backgroundSize: '100% 100%' } : undefined}
           >
             {isV2
               ? <SceneV2 theme={theme} ctx={{ stage, working, data }} onSelect={setSelected} />
@@ -96,7 +96,7 @@ function SceneV2({ theme, ctx, onSelect }) {
           <button
             key={a.id}
             className={`iscene-actor act-${m.act} face-${m.face} kind-${a.kind}`}
-            style={{ left: `${m.at.x}%`, top: `${m.at.y}%`, '--tint': a.tint }}
+            style={{ left: `${m.at.x}%`, top: `${m.at.y}%`, '--tint': a.tint, zIndex: Math.round(m.at.y) }}
             onClick={() => onSelect(a.id)}
             title={`${a.name} — clic para ver detalle`}
           >

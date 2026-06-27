@@ -41,11 +41,12 @@ function brainAsset(name) { return pick(brainFiles, name) }
 // deriva la ACCIÓN de cada uno del estado REAL (sit_idle/writing/stand_present/vote/
 // stand_verdict) y propsFor coloca los pergaminos. No caminan (sentados). El motor
 // (InteractiveScene) anima sentarse↔levantarse y respeta prefers-reduced-motion.
+// Posiciones de los PIES de cada personaje (sprite anclado abajo) al borde de la mesa.
 const COUNCIL_SEATS = {
-  king: { x: 50, y: 34, face: 'S' }, // trono a la cabecera, de frente a la mesa
-  A:    { x: 31, y: 56, face: 'E' }, // izquierda, mira a la mesa
-  B:    { x: 69, y: 56, face: 'W' }, // derecha, mira a la mesa
-  C:    { x: 50, y: 73, face: 'N' }, // frente inferior, mira a la mesa (orientación estricta)
+  king: { x: 50, y: 50, face: 'S' }, // cabecera (lado lejano), de frente a la mesa
+  A:    { x: 31, y: 63, face: 'E' }, // borde izquierdo, mira a la mesa
+  B:    { x: 69, y: 63, face: 'W' }, // borde derecho, mira a la mesa
+  C:    { x: 50, y: 84, face: 'N' }, // borde cercano (delante), mira a la mesa (estricta)
 }
 const council = {
   id: 'council-round-table',
@@ -57,7 +58,7 @@ const council = {
   assets: {
     background: councilAsset('background.png'),
     table: councilAsset('table.png'),
-    tablePos: { x: 50, y: 58, w: 38 },
+    tablePos: { x: 50, y: 64, w: 46 },
     scrolls: { scroll_blank: councilAsset('scroll-blank.png'), scroll_verdict: councilAsset('scroll-verdict.png') },
     sprites: {
       king: councilAsset('king.png'),
@@ -106,11 +107,11 @@ const council = {
   propsFor({ stage, working, data }) {
     const final = data?.final
     const props = []
-    const blanks = { A: { x: 39, y: 56 }, B: { x: 61, y: 56 }, C: { x: 50, y: 68 } }
+    const blanks = { A: { x: 37, y: 62 }, B: { x: 63, y: 62 }, C: { x: 50, y: 72 } }
     if (working && (stage === 'opinions' || stage === 'review') && !final) {
       for (const id of ['A', 'B', 'C']) props.push({ id: `scroll_${id}`, kind: 'scroll_blank', ...blanks[id] })
     }
-    if (final) props.push({ id: 'scroll_verdict', kind: 'scroll_verdict', x: 50, y: 56 })
+    if (final) props.push({ id: 'scroll_verdict', kind: 'scroll_verdict', x: 50, y: 62 })
     return props
   },
   detailFor(agentId, data) {
