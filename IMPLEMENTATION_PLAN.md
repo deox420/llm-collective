@@ -252,8 +252,16 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     `SceneTheme v2`, diseño por escena (Council detallado; Dev Team/Brain esbozados) y
     plan por fases (F-S0 motor → F-S1/2 Council → F-S3 replicar). Decisión en
     **ADR-0011**. Supersede el contrato de doc 13 §13.4.
-  - Pendiente: aprobación del SDD por el usuario → ejecutar F-S0 (motor) y F-S1/2
-    (Council). Los assets v1 actuales siguen sirviendo de placeholder mientras tanto.
+  - **Council según visión del usuario (§14.6.1 reescrito):** sala de castillo, mesa
+    redonda con el rey en su trono a la cabecera (presente en la mesa); movimiento
+    **mínimo y sentado** (no caminan): al llegar la consulta aparece un pergamino en
+    blanco frente a cada caballero, **escriben** su respuesta, **se levantan a presentar
+    y votar**, y el **rey se levanta a dar el veredicto** (pergamino sellado al centro).
+    Set de animaciones por personaje (sit_idle/writing/stand_present/vote; rey
+    sit_idle/stand_verdict). Tabla de **proporciones** (§14.6.1-P, personaje=80px de
+    referencia) y prompts de PixelLab **en inglés** (§14.6.1-A). Un solo estilo, a escala.
+  - Pendiente: ok del usuario al §14.6.1 (orientación ¾ frontal vs estricta; idle vivo) →
+    ejecutar F-S0 (motor) y F-S1/2 (Council). Placeholders v1 mientras tanto.
 
 - **2026-06-26 · Fase 6 (reapertura) — Assets PixelLab generados + escena cableada.**
   - Con el MCP de PixelLab ya conectado, generados los 6 assets de Council

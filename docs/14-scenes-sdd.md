@@ -67,6 +67,13 @@ Los **fondos** se generan a la resolución de la escena (≈360×240) e incluyen
 fijo (muros, escritorios, estanterías). Los **objetos dinámicos** (pergamino, libros,
 taza) son sprites con fondo transparente que el motor coloca/anima según la etapa.
 
+**Proporciones y consistencia (requisito duro del usuario).** Todo a escala y con **un
+solo estilo**: personajes, decoración del escenario y props guardan proporciones reales
+entre sí (nada de un pergamino más grande que una persona) y comparten paleta, contorno y
+nivel de detalle. El alto en píxeles de cada sprite se fija en `theme.json` para forzar la
+proporción al integrarlo sobre el fondo. La tabla de escala de referencia (Council) está
+en §14.6.1-P; cada escena replicará su propia tabla con la misma regla.
+
 ---
 
 ## 14.3 Modelo de espacio y movimiento
@@ -239,38 +246,119 @@ el motor sepa cuántos pasos tiene cada `steps(n)`.
 
 ## 14.6 Diseño por escena
 
-### 14.6.1 Council — la mesa redonda *(referencia, se ejecuta primero)*
+### 14.6.1 Council — la mesa redonda *(se ejecuta primero, al 100%)*
 
-**Escenario:** salón medieval, mesa redonda al centro, 3 sillas de caballero alrededor y
-un trono al fondo. La mesa es el obstáculo central (los personajes la rodean, no la
-cruzan).
+> Diseño según la visión del usuario. Los prompts de PixelLab van **en inglés** (§A).
+> Movimiento **mínimo y sentado**: nadie deambula; la acción es sentarse/escribir/
+> levantarse en el sitio + props (pergaminos). El sistema de marcha (§14.3) aquí casi no
+> se usa; sí se usará en Dev Team y Second Brain.
 
-**Personajes:** Caballero A/B/C (modelos del council) + Rey (chairman).
+**Disposición:** sala decorada como un **castillo medieval**. **Mesa redonda al centro**;
+el **rey al fondo, sentado en su trono a la cabecera de la mesa** (presente en la mesa, no
+aparte). Los **3 caballeros sentados alrededor** de la mesa. Decoración del castillo
+(muros de piedra, estandartes, antorchas, candelabro, alfombra) **a escala** (§14.6.1-P).
 
-**Waypoints (x,y en 0–100):**
-| id | x | y | face | uso |
-|----|---|---|------|-----|
-| `seat_A` | 24 | 40 | E | silla A (reposo) |
-| `seat_B` | 76 | 40 | W | silla B |
-| `seat_C` | 30 | 78 | NE | silla C |
-| `throne` | 50 | 16 | S | trono del rey (reposo) |
-| `table_A` | 36 | 46 | E | borde de mesa frente a A (hablar) |
-| `table_B` | 64 | 46 | W | borde de mesa frente a B |
-| `table_C` | 42 | 64 | N | borde de mesa frente a C |
-| `head` | 50 | 34 | S | cabecera de mesa (rey sintetiza) |
+**Personajes (sentados, mirando hacia la mesa):** Caballero A/B/C (modelos) + Rey (chairman).
 
-**Coreografía por etapa:**
-| Etapa real (evento) | Movimiento |
-|---------------------|------------|
-| reposo / sin sesión | caballeros en `seat_*` (idle), rey en `throne` (idle) |
-| `opinions` · `stage1_opinion(model)` | el caballero de ese modelo camina `seat→table_*`, `act:'talk'`; al terminar su opinión vuelve a `seat_*` (o se queda inclinado hasta el final de la etapa) |
-| `review` | cada caballero en su `table_*` o `seat_*`, **gira** para "mirarse" (face hacia el centro); sin grandes desplazamientos (revisión anónima) |
-| `synthesis` | el rey baja del `throne` a `head`, `act:'synthesize'` (alza la mano), glow dorado; los caballeros miran al rey (`face` N) |
-| `done` · `session:done` | aparece `scroll` (prop) en el centro de la mesa; el rey vuelve al `throne` (o se queda en `head`) |
-| `mode:locked` | salón atenuado, sin movimiento |
+**Posiciones (no hay waypoints de marcha; cada personaje tiene su asiento fijo):**
+| id | x | y | orientación | asiento |
+|----|---|---|-------------|---------|
+| `king` | 50 | 22 | S (de frente, hacia la mesa/cámara) | trono, cabecera de la mesa |
+| `knight_A` | 26 | 50 | E (mira a la derecha, hacia la mesa) | lado izquierdo |
+| `knight_B` | 74 | 50 | W (mira a la izquierda) | lado derecho |
+| `knight_C` | 50 | 72 | N (mira arriba, hacia la mesa) | frente inferior |
+| `scroll_*` | frente a cada personaje | — | pergamino sobre la mesa (prop por personaje) |
 
-**Props dinámicos:** `scroll` (pergamino) visible solo en `done`.
-**Acciones de personaje:** caballero `talk` (S y dirección a mesa), rey `synthesize` (S).
+> **Decisión de orientación abierta:** con vista top-down, el caballero inferior (`knight_C`)
+> mirando al norte mostraría la espalda. Propuesta: render en **¾ frontal** para que todas
+> las caras y los detalles se vean (recomendado para que "se vea bien"); alternativa,
+> orientación estricta (C de espaldas). A confirmar al pulir (F-S2).
+
+**Coreografía por etapa (la mesa redonda, sentados):**
+| Etapa real (evento) | Qué pasa en escena |
+|---------------------|--------------------|
+| reposo / sin sesión | rey y caballeros sentados, `sit_idle` |
+| llega la consulta (`stage:start('opinions')`) | aparece un **pergamino en blanco delante de cada caballero** (prop `scroll_A/B/C`) |
+| `opinions` · cada `stage1_opinion(model)` | el caballero de ese modelo **escribe** en su pergamino (`act:'writing'`); al terminar su opinión, **se pone de pie y la presenta** (`act:'stand_present'`) y se queda de pie |
+| `review` (votaciones) | los caballeros **de pie** hacen su voto (`act:'vote'`, gesto de señalar/levantar la mano); revisión anónima — sin revelar identidades |
+| `synthesis` | el **rey se pone de pie** desde el trono y **da el veredicto** (`act:'stand_verdict'`, alza la mano), glow dorado; los caballeros sentados/atentos |
+| `done` · `session:done` | el **pergamino del veredicto** (`scroll_verdict`) aparece en el centro de la mesa; el rey de pie con la mano en alto |
+| `mode:locked` | sala atenuada, todos `sit_idle` |
+
+**Props dinámicos:** `scroll_A/B/C` (pergamino en blanco frente a cada caballero, aparece
+al empezar `opinions`); `scroll_verdict` (pergamino sellado en el centro, aparece en `done`).
+
+**Set de animaciones por personaje (mínimo):**
+| Personaje | Animaciones |
+|-----------|-------------|
+| Caballero A/B/C | `sit_idle`, `writing` (escribe en el pergamino), `stand_present` (se levanta y presenta), `vote` (gesto de voto, de pie) |
+| Rey | `sit_idle`, `stand_verdict` (se levanta y proclama, mano en alto) |
+
+> "Si necesitas más de una animación para animar todo esto, sin problema" (usuario): el set
+> de arriba son **3–4 animaciones por caballero** y **2** del rey. Se generan en la
+> orientación de cada asiento (§posiciones).
+
+#### 14.6.1-P · Proporciones y escala (requisito del usuario)
+Todo debe verse **a proporción y con el mismo estilo**; nada desproporcionado (p. ej. un
+pergamino más grande que una persona). Tamaños objetivo (con personaje = **80 px** de alto
+como referencia):
+
+| Elemento | Tamaño relativo | px aprox. |
+|----------|-----------------|-----------|
+| Personaje (caballero/rey) | 1.0 (referencia) | 80 |
+| Trono | ~1.25× el personaje | ~100 alto |
+| Pergamino sobre la mesa | ~0.3× el personaje | ~24 |
+| Pergamino del veredicto | ~0.4× | ~32 |
+| Mesa redonda | ~3× ancho de personaje | ~200 ancho |
+| Antorcha de pared | ~0.6× | ~48 |
+| Estandarte | ~1.1× | ~88 alto |
+| Candelabro | ~0.5× | ~40 |
+
+Reglas: (1) **un solo estilo** (misma paleta, contorno y nivel de detalle en todo);
+(2) generar los personajes **en lote** y, si hace falta coherencia, en modo `v3`;
+(3) el fondo del salón se genera a la resolución de escena y los personajes/props se
+escalan a estos tamaños relativos al integrarlos (el `theme.json` fija el alto en px de
+cada sprite para forzar la proporción).
+
+#### 14.6.1-A · Prompts de generación (PixelLab, en inglés)
+
+**Background (`create_map_object` / scene, ~360×240, high top-down, lineless):**
+```
+interior of a grand medieval castle hall, large round wooden table in the center,
+ornate throne at the head of the table, stone brick walls with hanging banners and
+wall torches, iron chandelier, red carpet, checkerboard stone floor, symmetrical,
+slightly tilted top-down view, retro pixel art, limited palette
+```
+negative: `modern objects, text, watermark, blurry, smooth gradients, people`
+
+**Knights (`create_character`, size 80, high detail, facing the seat's direction):**
+```
+A — seated medieval knight, royal blue tunic, polished steel helmet with a blue plume,
+    chainmail, hands resting on a round table, retro pixel art, limited palette
+B — seated medieval knight, crimson red tunic, steel helmet with a red plume, chainmail …
+C — seated medieval knight, forest green tunic, steel helmet with a green plume, chainmail …
+```
+
+**King (`create_character`, size 80, high detail, facing S):**
+```
+medieval king seated on an ornate throne, golden crown, red royal mantle with white
+ermine trim, bearded, regal, retro pixel art, limited palette
+```
+
+**Animations (`animate_character`, v3 custom, in the seat's direction):**
+```
+knight writing:        "sitting, writing on a parchment scroll with a quill"
+knight stand_present:  "standing up from the chair and presenting, one hand raised, speaking"
+knight vote:           "standing, raising one hand to cast a vote"
+king stand_verdict:    "standing up from the throne and raising one hand, proclaiming"
+(idle: base frame, or template "breathing-idle")
+```
+
+**Props (`create_map_object`, transparent, scaled per §14.6.1-P):**
+```
+blank scroll:    "small blank open parchment scroll on a table, retro pixel art, limited palette"  (~24px)
+verdict scroll:  "rolled parchment scroll with a red wax seal, retro pixel art, limited palette"   (~32px)
+```
 
 ### 14.6.2 Dev Team — la oficina *(esbozo; se detalla al replicar)*
 
