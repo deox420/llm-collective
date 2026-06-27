@@ -213,7 +213,7 @@ button { font-family: inherit; }
 /* v2 con sprites reales de PixelLab (cuando están descargados) */
 .iscene-table {
   position: absolute; transform: translate(-50%, -50%); height: auto;
-  image-rendering: pixelated; z-index: 55; pointer-events: none;
+  image-rendering: pixelated; z-index: 68; pointer-events: none;
   filter: drop-shadow(0 4px 4px rgba(0,0,0,.3));
 }
 /* Actores anclados por los PIES (sprite bottom-anchored): el punto del asiento es
