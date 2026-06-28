@@ -9,7 +9,7 @@ import asyncio
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared import conversations
 from shared.concurrency import ModeBusyError, manager
@@ -20,6 +20,10 @@ from .orchestrator import COUNCIL_STAGES, run_council
 router = APIRouter(prefix="/api")
 
 _SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+
+# Límite de entrada (07-security: validación de entradas / DoS). Generoso para una
+# pregunta real (~4k tokens) pero acota payloads abusivos antes de gastar modelo.
+MAX_CONTENT_CHARS = 16_000
 
 
 def _error(code: str, message: str, status: int, **extra) -> JSONResponse:
@@ -54,7 +58,7 @@ async def get_conversation(conversation_id: str):
 
 # ── Council ──────────────────────────────────────────────────────────────
 class CouncilQueryIn(BaseModel):
-    content: str
+    content: str = Field(min_length=1, max_length=MAX_CONTENT_CHARS)
 
 
 @router.post("/council/{conversation_id}/query")

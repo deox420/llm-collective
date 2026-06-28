@@ -80,3 +80,14 @@ async def test_council_query_streams_three_stages_and_persists(client, use_defau
 async def test_council_query_on_missing_conversation_404(client, use_default_models):
     r = await client.post("/api/council/nope/query", json={"content": "hola"})
     assert r.status_code == 404
+
+
+async def test_council_query_rejects_empty_and_oversized_content(client, use_default_models):
+    """07-security: la validación de entrada rechaza payloads vacíos o gigantes (422)."""
+    cid = (await client.post("/api/conversations", json={"project": "council"})).json()["id"]
+
+    r_empty = await client.post(f"/api/council/{cid}/query", json={"content": ""})
+    assert r_empty.status_code == 422
+
+    r_big = await client.post(f"/api/council/{cid}/query", json={"content": "x" * 20_000})
+    assert r_big.status_code == 422

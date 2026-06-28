@@ -12,7 +12,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared import conversations, model_config
 from shared.concurrency import ModeBusyError, manager
@@ -24,6 +24,10 @@ from .store import VectorStore
 
 router = APIRouter(prefix="/api")
 _SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+
+# Límites de entrada (07-security: validación / DoS).
+MAX_CONTENT_CHARS = 16_000
+MAX_TOP_K = 50
 
 # --- túnel (FR-S5) ---------------------------------------------------------
 TUNNEL_TOKEN = os.environ.get("SECONDBRAIN_TUNNEL_TOKEN", "")
@@ -103,8 +107,8 @@ async def index_status(job_id: str):
 
 # --- consulta --------------------------------------------------------------
 class QueryIn(BaseModel):
-    content: str
-    top_k: int = 6
+    content: str = Field(min_length=1, max_length=MAX_CONTENT_CHARS)
+    top_k: int = Field(default=6, ge=1, le=MAX_TOP_K)
     council_overlay: bool = False
 
 
