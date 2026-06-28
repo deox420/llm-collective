@@ -6,6 +6,11 @@ function dir8(dx, dy) {
   const a = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360  // 0=E, 90=S(abajo), 270=N
   return DIRS[Math.round(a / 45) % 8]
 }
+// Reduce 8 direcciones a las 4 cardinales con tira de marcha (diagonales → horizontal).
+function walkKey(dir) {
+  if (dir === 'N' || dir === 'S' || dir === 'E' || dir === 'W') return dir
+  return (dir === 'NE' || dir === 'SE') ? 'E' : 'W'
+}
 
 // Motor de marcha (SDD §14.3.6): interpola la posición de cada agente hacia su
 // destino (choreography) a velocidad constante, eligiendo el rumbo (8 dir) mientras
@@ -186,7 +191,9 @@ function SceneV2Walk({ theme, ctx, onSelect }) {
       ))}
       {theme.agents.map((a) => {
         const s = states[a.id] || { x: 50, y: 50, dir: 'S', motion: 'idle' }
-        const strip = s.motion === 'walk' ? anim[a.id]?.walk?.[s.dir] : anim[a.id]?.[s.motion]
+        const strip = s.motion === 'walk'
+          ? anim[a.id]?.walk?.[walkKey(s.dir)]
+          : (anim[a.id]?.[s.motion] || anim[a.id]?.talk)
         const sprite = sprites[a.id]
         return (
           <button

@@ -36,12 +36,11 @@ function councilAsset(name) { return pick(councilFiles, name) }
 function devteamAsset(name) { return pick(devteamFiles, name) }
 function brainAsset(name) { return pick(brainFiles, name) }
 
-const DIRS8 = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW']
-// Tiras de animación de un dev: caminar por dirección + acciones (teclear, charlar).
-// Nombres: <slug>.walk-<dir>.png, <slug>.type.png, <slug>.talk.png (minúsculas dir).
+// Tiras de animación de un dev: caminar (4 cardinales) + acciones (teclear, charlar).
+// Nombres: <slug>.walk-{s,e,n,w}.png, <slug>.type.png, <slug>.talk.png.
 function dtAnim(slug) {
   const walk = {}
-  for (const d of DIRS8) walk[d] = devteamAsset(`${slug}.walk-${d.toLowerCase()}.png`)
+  for (const d of ['S', 'E', 'N', 'W']) walk[d] = devteamAsset(`${slug}.walk-${d.toLowerCase()}.png`)
   return { walk, type: devteamAsset(`${slug}.type.png`), talk: devteamAsset(`${slug}.talk.png`) }
 }
 
@@ -141,10 +140,12 @@ const council = {
 //  - architect (diseño) y entrega: los 4 a la reunión (se juntan).
 //  - programmer/tester (código/pruebas): el activo a su estación (teclea); resto al café.
 //  - reviewer (revisión): el revisor a la reunión; resto al café.
+// Waypoints (pies) ajustados al fondo de oficina: mesa de reuniones a la IZQUIERDA,
+// sofá/café al CENTRO-arriba, fila de escritorios ABAJO/derecha.
 const DT = {
-  meeting: { architect: { x: 13, y: 46 }, programmer: { x: 25, y: 46 }, reviewer: { x: 13, y: 64 }, tester: { x: 25, y: 64 } },
-  break:   { architect: { x: 44, y: 48 }, programmer: { x: 56, y: 48 }, reviewer: { x: 44, y: 64 }, tester: { x: 56, y: 64 } },
-  desk:    { architect: { x: 74, y: 38 }, programmer: { x: 88, y: 38 }, reviewer: { x: 74, y: 66 }, tester: { x: 88, y: 66 } },
+  meeting: { architect: { x: 11, y: 44 }, programmer: { x: 24, y: 44 }, reviewer: { x: 11, y: 60 }, tester: { x: 24, y: 60 } },
+  break:   { architect: { x: 42, y: 54 }, programmer: { x: 54, y: 54 }, reviewer: { x: 46, y: 60 }, tester: { x: 58, y: 60 } },
+  desk:    { architect: { x: 40, y: 73 }, programmer: { x: 52, y: 73 }, reviewer: { x: 78, y: 73 }, tester: { x: 65, y: 73 } },
 }
 const DT_DESK_ROLE = { programmer: true, tester: true }  // trabajan en su estación; arquitecto/revisor en reuniones
 const DT_IDS = ['architect', 'programmer', 'reviewer', 'tester']
@@ -180,10 +181,10 @@ const devteam = {
     for (const id of DT_IDS) {
       let at, act, face
       if (gather) {
-        at = DT.meeting[id]; act = (id === 'architect' || (delivered && id === 'reviewer')) ? 'present' : 'idle'; face = 'S'
+        at = DT.meeting[id]; act = 'talk'; face = 'S'               // los 4 en la reunión, hablando
       } else if (working && stage === id) {
         if (DT_DESK_ROLE[id]) { at = DT.desk[id]; act = 'type'; face = 'N' }
-        else { at = DT.meeting[id]; act = 'present'; face = 'S' }   // revisor en reuniones
+        else { at = DT.meeting[id]; act = 'talk'; face = 'S' }      // revisor en reuniones
       } else {
         at = DT.break[id]; act = 'talk'; face = 'S'                 // sin tarea → café, charlando
       }
