@@ -40,9 +40,10 @@ PROFILES: dict[str, dict] = {
             "reviewer":   "cloud/deepseek-v3.2",
             "tester":     "cloud/qwen3-coder-next",
         },
-        # OJO: el catálogo de Ollama Cloud NO expone un modelo de embeddings. El
-        # Second Brain necesita Ollama LOCAL para embeddings: usa el perfil
-        # local_dev o apunta esto a local/nomic-embed-text con OLLAMA_LOCAL_HOST.
+        # Embeddings SIEMPRE locales: Ollama Cloud no ofrece embeddings (ADR-0010;
+        # /api/embeddings 404, /api/embed 401). El Second Brain requiere Ollama LOCAL
+        # (OLLAMA_LOCAL_HOST + `ollama pull nomic-embed-text`). Council y Dev Team no
+        # dependen de esto: son 100% cloud.
         "embeddings_model": "local/nomic-embed-text",
         # Fallback configurable (NFR-6): si un modelo cloud falla o no existe,
         # call_model reintenta con el modelo de aquí.

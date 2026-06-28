@@ -337,7 +337,8 @@ cd frontend && npm install && npm run dev      # frontend :5173 (proxy a :8000)
 - `frontend/src/`: `App.jsx` (shell con diseño Claude Design), `scenes.js` +
   `InteractiveScene.jsx` (Fase 6), `api.js`, `ParticleField.jsx`, `Icons.jsx`.
 - ADRs nuevos: **0008** (concurrencia modo único, diverge de SDD §12.4),
-  **0009** (sandbox subprocess en vez de Docker).
+  **0009** (sandbox subprocess en vez de Docker),
+  **0010** (embeddings locales: Ollama Cloud no ofrece embeddings).
 
 ### ⛔ Bloqueos del ENTORNO (no del código) — resolver en local o con allowlist
 1. **`ollama.com` (403 egress):** no se pueden hacer corridas reales de modelos ni
