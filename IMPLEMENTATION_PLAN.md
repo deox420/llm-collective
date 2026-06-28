@@ -24,7 +24,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 - [x] Implementar el **gestor de concurrencia global**: un único modo activo a la vez; los demás bloqueados (FR de concurrencia, `12-frontend.md`). _(Diverge de SDD §12.4; registrado en ADR-0008.)_
 - [x] Implementar el **emisor de eventos SSE de etapas** reutilizable por los tres modos (contrato en `13-interactive-scenes.md` §13.2 y `specs/api-spec.md`).
 - [x] Modelo de configuración (qué modelo va a cada rol) leído de `shared/model_config.py` vía `MODEL_PROFILE`, no hardcodeado. Las apps importan `COUNCIL_MODELS`, `CHAIRMAN_MODEL`, `DEVTEAM_ROLES`, `EMBEDDINGS_MODEL` de ahí.
-- [ ] **(Bloqueado)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. Clave ya configurada, pero **la política de egress de este entorno remoto bloquea `ollama.com` (403)**. Ejecutar en local o añadir `ollama.com` al allowlist del entorno.
+- [x] **(RESUELTO 2026-06-28)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. El egress a `ollama.com` **ya está abierto** y la clave vive en las variables de entorno del entorno cloud. Los nombres antiguos (`qwen3:32b`, `deepseek-r1:32b`, `llama3.3:70b`…) **ya no existían** en el catálogo 2026; `model_config.py` actualizado a nombres del catálogo vivo (`deepseek-v3.2`, `glm-5`, `gpt-oss:120b`, `deepseek-v4-pro`, `qwen3-coder-next`), los 5 verificados OK en la cuenta.
 
 **DoD:** tests del router pasan; un test demuestra que iniciar un segundo modo mientras otro corre devuelve "bloqueado"; los eventos SSE se emiten en orden de etapa.
 
@@ -82,24 +82,24 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 ## Fase 6 — Vista interactiva + assets PixelLab
 
 - [x] Implementar el contrato `SceneTheme` (`13-interactive-scenes.md` §13.4) en el frontend.
-- [ ] **(Bloqueado)** Generar los assets de **Council** (mesa redonda) con PixelLab vía MCP siguiendo `ASSETS.md`. El MCP de PixelLab no está conectado y `api.pixellab.ai` está bloqueado por la política de egress (403). Generar en local/con el MCP disponible.
+- [⏸️] **(STANDBY — decisión de entrega)** Generar los assets de **Council** (mesa redonda) con PixelLab vía MCP siguiendo `ASSETS.md`. El MCP de PixelLab no está conectado y `api.pixellab.ai` está bloqueado por egress (403). **Se aparca la parte pixel-art** y se prioriza cerrar lo funcional (Fase 7). Retomar cuando el MCP de PixelLab esté disponible (local/Claude Desktop); sustituir es solo cambiar `assets` en `frontend/src/scenes.js`.
 - [x] Cablear el mapa etapa→pose (sobre placeholders DOM/CSS con el mismo contrato; sustituir por sprites cuando existan).
 - [x] Clic en personaje → detalle real (opinión/código/nota). Respetar `prefers-reduced-motion`.
 - [x] Escenas de Dev Team (oficina) y Second Brain (biblioteca) (placeholders con el contrato).
 
-**DoD:** la vista interactiva de Council refleja las etapas reales y el clic muestra contenido real ✅. _Pendiente: sprites reales de PixelLab (bloqueado por egress/MCP); el render usa placeholders con el mismo `SceneTheme`, así que sustituirlos es solo cambiar `assets`._
+**DoD:** la vista interactiva de Council refleja las etapas reales y el clic muestra contenido real ✅. _Sprites reales de PixelLab en **standby** (egress/MCP); el render usa placeholders con el mismo `SceneTheme`, así que sustituirlos es solo cambiar `assets`. Esto NO bloquea la parte funcional, que queda cerrada en la Fase 7._
 
 ---
 
 ## Fase 7 — Integración, seguridad y pulido
 
-- [ ] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs, validación de entradas, sandbox revisado.
-- [ ] Suite de tests completa según `specs/test-plan.md`; cobertura de la lógica de orquestación.
-- [ ] README de cada app actualizado con cómo arrancar y configurar.
-- [ ] Revisar costes/operación (`08-costs.md`, `09-operations.md`) y dejar notas de despliegue.
-- [ ] Verificación final contra los requisitos: cada FR/NFR/CON tiene implementación o queda anotado.
+- [x] Repaso del modelo de amenazas (`07-security.md`): sin secretos en logs/URLs, validación de entradas, sandbox revisado. → `docs/specs/security-review.md`.
+- [x] Suite de tests completa según `specs/test-plan.md`; cobertura de la lógica de orquestación. Cerrados los huecos **FR-5/TC-5** (caché) y **NFR-6/TC-6** (fallback). 72 tests verdes.
+- [x] README de cada app actualizado con cómo arrancar y configurar (`projects/*/README.md`).
+- [x] Revisar costes/operación (`08-costs.md`, `09-operations.md`) y dejar notas de despliegue (`start.sh`, NFR-9).
+- [x] Verificación final contra los requisitos: cada FR/NFR/CON tiene implementación o queda anotado → `docs/specs/traceability.md`.
 
-**DoD:** todo el `test-plan.md` pasa; los tres modos funcionan end-to-end en chat e interactivo; sin secretos expuestos; READMEs al día.
+**DoD:** `test-plan.md` cubierto (los `Must` automatizables en verde; E2E con modelos reales y TC-S4 quedan como prueba manual por el bloqueo de egress); los tres modos funcionan end-to-end en chat; sin secretos expuestos; READMEs al día. _Vista interactiva: contrato + placeholders funcionan; sprites PixelLab en **standby** (ver Fase 6)._
 
 ---
 
@@ -254,19 +254,71 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     (§13.5), se usan placeholders con el mismo contrato; sustituirlos por los sprites
     es solo cambiar `assets`. 63 tests backend siguen verdes; build de frontend verde.
 
+- **2026-06-28 · Fase 7 — Integración, seguridad y pulido · CERRADA. Interactiva en STANDBY.**
+  - **Decisión de entrega:** aparcar la parte pixel-art (sprites PixelLab, bloqueada por
+    egress/MCP) y terminar la parte funcional. La vista interactiva sigue operativa con
+    placeholders sobre el contrato `SceneTheme`; cuando haya MCP, sustituir es cambiar
+    `assets`. No bloquea nada de lo funcional.
+  - **FR-5 (caché de respuestas) implementada** en `shared/model_router.py`: respuestas
+    idénticas (model + messages + opts) se sirven de memoria (`_cache`, `_cache_key`,
+    `clear_cache`, `cache_stats`); desactivable con `MODEL_CACHE=0`; `use_cache=False`
+    fuerza llamada fresca. Cubre la palanca de ahorro de `08-costs` y `cache_hit` de
+    `09-operations`.
+  - **NFR-6 (fallback configurable) implementado**: `model_config.FALLBACKS`/`fallback_for`
+    (por perfil) + reintento en `call_model` cuando el proveedor falla (5xx/conexión) o
+    el modelo no existe (404). 429 (queue_full) NO cambia de modelo (backoff, runbook).
+    Sin ciclos infinitos (`_tried`). En `cloud_plus_gpu`, la GPU caída cae a cloud.
+  - **Validación de entradas (seguridad/DoS):** `content` 1–16 000 chars en los tres
+    endpoints de consulta; `max_iterations` acotado 1–20 (devteam); `top_k` 1–50 (brain).
+  - **Repaso de seguridad** completo en `docs/specs/security-review.md`: sin secretos en
+    logs/URLs (claves solo en headers; `verify_models` no imprime la clave; `/health` solo
+    booleanos), sandbox con env limpio + rlimits + anti-escape de rutas, túnel del brain.
+  - **READMEs** de las tres apps reescritos (arranque, configuración por perfil, API, tests).
+    **`start.sh`** creado (NFR-9, referenciado en `09-operations` pero ausente).
+  - **Trazabilidad final** en `docs/specs/traceability.md`: cada FR/NFR/CON con
+    implementación + prueba, o anotado (FR-S6 `Could` no implementado; NFR-1/NFR-3/TC-S4
+    como prueba manual por el bloqueo de egress).
+  - **Tests: 72 verdes** (`uv run pytest`), +9 nuevos (caché, fallback, validación). App
+    arranca; fallback y caché verificados en import. Egress a `ollama.com` sigue bloqueado:
+    corridas con modelos reales siguen pendientes de ejecutar en local (no es código).
+
 ---
 
-## 🔖 PUNTO DE RETOMA (2026-06-26)
+## 🔖 PUNTO DE RETOMA (2026-06-28)
 
-**Dónde retomar:** Fases 0–6 cerradas y pusheadas (rama
-`claude/llm-collective-phase-0-2947fb`, PR #1). Falta la **Fase 7** y desbloquear
-las corridas reales. Empezar por la Fase 7.
+**Dónde retomar:** Fases 0–7 cerradas. La **parte funcional está terminada**. Lo único
+pendiente NO es código, sino desbloqueos de entorno: (1) corridas con modelos reales
+(egress `ollama.com`) y (2) los **sprites de PixelLab**, que quedan en **STANDBY** por
+decisión de entrega. Retomar la parte interactiva pixel-art solo cuando el MCP de
+PixelLab esté disponible (Claude Desktop/local).
 
 ### Estado por fase
 - **0–5 ✅** núcleo + las 3 verticales (Council, Dev Team, Second Brain) end-to-end.
-- **6 ✅ (parcial)** vista interactiva con contrato `SceneTheme` + placeholders;
-  faltan los sprites de PixelLab (bloqueados, ver abajo).
-- **7 ⏳ PENDIENTE** — integración, seguridad y pulido.
+- **6 ✅ funcional / ⏸️ sprites en STANDBY** — vista interactiva con contrato `SceneTheme`
+  + placeholders operativos; los sprites de PixelLab se aparcan (bloqueados, ver abajo).
+- **7 ✅ CERRADA** — caché (FR-5), fallback (NFR-6), validación de entradas, repaso de
+  seguridad (`docs/specs/security-review.md`), READMEs de apps, `start.sh`, trazabilidad
+  (`docs/specs/traceability.md`). 72 tests verdes.
+
+### Qué falta (no es código)
+1. ~~Corridas reales de las 3 verticales~~ — **HECHO (2026-06-28)**, ver bitácora. Las
+   tres (Council, Dev Team, Second Brain) verificadas end-to-end con modelos REALES.
+2. Generar e integrar los sprites de PixelLab (STANDBY) — ver `ASSETS.md`. La clave de
+   PixelLab también está en las variables de entorno por si se retoma.
+
+### Bitácora de verificación real (2026-06-28)
+- **Council** ✅ end-to-end real: pregunta → 3 opiniones en paralelo (deepseek-v3.2,
+  glm-5, gpt-oss:120b) → revisión cruzada anónima → síntesis de `deepseek-v4-pro`.
+  Etapas emitidas en orden por SSE.
+- **Dev Team** ✅ end-to-end real: architect → programmer (tool_calls reales escribiendo
+  ficheros) → reviewer → tester (**pytest REAL en sandbox**, verde en iter 1).
+- **Second Brain** ✅ end-to-end real: embeddings LOCALES reales (`nomic-embed-text`,
+  768-dim, vía Ollama local instalado en el contenedor) + Chroma + recuperación +
+  síntesis del chairman REAL (`deepseek-v4-pro`) **citando la nota fuente**. La pregunta
+  sobre sincronización recuperó `sync.md` como top (0.777) y la respuesta lo citó.
+  - **Nota de infra:** Ollama Cloud NO ofrece embeddings (`/api/embeddings` 404;
+    `/api/embed` 401). El embedding exige Ollama local. Hosts a permitir en egress:
+    `registry.ollama.ai` (pull del modelo). Documentado en `model_config` y README.
 
 ### Cómo arrancar el proyecto
 ```bash
@@ -285,7 +337,8 @@ cd frontend && npm install && npm run dev      # frontend :5173 (proxy a :8000)
 - `frontend/src/`: `App.jsx` (shell con diseño Claude Design), `scenes.js` +
   `InteractiveScene.jsx` (Fase 6), `api.js`, `ParticleField.jsx`, `Icons.jsx`.
 - ADRs nuevos: **0008** (concurrencia modo único, diverge de SDD §12.4),
-  **0009** (sandbox subprocess en vez de Docker).
+  **0009** (sandbox subprocess en vez de Docker),
+  **0010** (embeddings locales: Ollama Cloud no ofrece embeddings).
 
 ### ⛔ Bloqueos del ENTORNO (no del código) — resolver en local o con allowlist
 1. **`ollama.com` (403 egress):** no se pueden hacer corridas reales de modelos ni

@@ -5,7 +5,7 @@ import asyncio
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared import conversations, model_config
 from shared.concurrency import ModeBusyError, manager
@@ -17,14 +17,19 @@ from .sandbox import Sandbox
 router = APIRouter(prefix="/api")
 _SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
+# Límites de entrada (07-security: validación / DoS). El tope de iteraciones evita
+# que un cliente pida un bucle de corrección desmesurado (FR-D4 + amenaza DoS).
+MAX_CONTENT_CHARS = 16_000
+MAX_ITERATIONS_CAP = 20
+
 
 def _error(code: str, message: str, status: int, **extra) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error": {"code": code, "message": message, **extra}})
 
 
 class TaskIn(BaseModel):
-    content: str
-    max_iterations: int | None = None
+    content: str = Field(min_length=1, max_length=MAX_CONTENT_CHARS)
+    max_iterations: int | None = Field(default=None, ge=1, le=MAX_ITERATIONS_CAP)
 
 
 @router.post("/devteam/{conversation_id}/task")
