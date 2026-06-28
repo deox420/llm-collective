@@ -74,5 +74,6 @@ implementado (anotado).
 
 | Área | Estado | Motivo |
 |------|--------|--------|
-| Sprites pixel-art (PixelLab) de la vista interactiva | ⏸️ | MCP no conectado + `api.pixellab.ai` bloqueado por egress. El contrato `SceneTheme` y los placeholders funcionan; sustituir los sprites es solo cambiar `assets` en `frontend/src/scenes.js` (SDD §13.5). |
-| Corridas con modelos reales / `verify_models` | 🟡 | Egress a `ollama.com` bloqueado (403). Verificado todo con modelos *faked*; con acceso real el flujo es idéntico. |
+| Sprites pixel-art (PixelLab) de la vista interactiva | ⏸️ | MCP no conectado. El contrato `SceneTheme` y los placeholders funcionan; sustituir los sprites es solo cambiar `assets` en `frontend/src/scenes.js` (SDD §13.5). |
+| Corridas con modelos reales / `verify_models` | ✅ | **HECHO (2026-06-28).** `verify_models` OK; las 3 verticales verificadas end-to-end con modelos reales (Council y Dev Team por Ollama Cloud; Second Brain con embeddings locales `nomic-embed-text` + chairman cloud). Ver bitácora en `IMPLEMENTATION_PLAN.md`. |
+| Embeddings de Second Brain en cloud | ⚠️ | Ollama Cloud no ofrece embeddings (`/api/embeddings` 404, `/api/embed` 401). El embedding exige Ollama local; `model_config` apunta `embeddings_model` a `local/nomic-embed-text`. |

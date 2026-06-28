@@ -301,13 +301,9 @@ PixelLab esté disponible (Claude Desktop/local).
   (`docs/specs/traceability.md`). 72 tests verdes.
 
 ### Qué falta (no es código)
-1. ~~Corridas reales~~ — **HECHO (2026-06-28)** para Council y Dev Team (ver bitácora).
-   Egress a `ollama.com` abierto + clave en variables de entorno. Perfil refrescado.
-2. **Second Brain real** pendiente: Ollama Cloud **no expone `/api/embeddings`** (404),
-   así que los embeddings exigen **Ollama LOCAL** (`OLLAMA_LOCAL_HOST` + `nomic-embed-text`)
-   o el perfil `local_dev`. La lógica RAG (chunking, Chroma, recuperación, citas) está
-   probada con embeddings *faked*; solo falta el modelo de embeddings real.
-3. Generar e integrar los sprites de PixelLab (STANDBY) — ver `ASSETS.md`. La clave de
+1. ~~Corridas reales de las 3 verticales~~ — **HECHO (2026-06-28)**, ver bitácora. Las
+   tres (Council, Dev Team, Second Brain) verificadas end-to-end con modelos REALES.
+2. Generar e integrar los sprites de PixelLab (STANDBY) — ver `ASSETS.md`. La clave de
    PixelLab también está en las variables de entorno por si se retoma.
 
 ### Bitácora de verificación real (2026-06-28)
@@ -316,8 +312,13 @@ PixelLab esté disponible (Claude Desktop/local).
   Etapas emitidas en orden por SSE.
 - **Dev Team** ✅ end-to-end real: architect → programmer (tool_calls reales escribiendo
   ficheros) → reviewer → tester (**pytest REAL en sandbox**, verde en iter 1).
-- **Second Brain** ⛔ bloqueado por embeddings (cloud sin `/api/embeddings`). Necesita
-  Ollama local. `model_config` ya apunta `embeddings_model` a `local/nomic-embed-text`.
+- **Second Brain** ✅ end-to-end real: embeddings LOCALES reales (`nomic-embed-text`,
+  768-dim, vía Ollama local instalado en el contenedor) + Chroma + recuperación +
+  síntesis del chairman REAL (`deepseek-v4-pro`) **citando la nota fuente**. La pregunta
+  sobre sincronización recuperó `sync.md` como top (0.777) y la respuesta lo citó.
+  - **Nota de infra:** Ollama Cloud NO ofrece embeddings (`/api/embeddings` 404;
+    `/api/embed` 401). El embedding exige Ollama local. Hosts a permitir en egress:
+    `registry.ollama.ai` (pull del modelo). Documentado en `model_config` y README.
 
 ### Cómo arrancar el proyecto
 ```bash
