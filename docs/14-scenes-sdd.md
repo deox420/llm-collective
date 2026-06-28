@@ -360,20 +360,38 @@ blank scroll:    "small blank open parchment scroll on a table, retro pixel art,
 verdict scroll:  "rolled parchment scroll with a red wax seal, retro pixel art, limited palette"   (~32px)
 ```
 
-### 14.6.2 Dev Team — la oficina *(esbozo; se detalla al replicar)*
+### 14.6.2 Dev Team — la oficina *(diseño confirmado por el usuario)*
 
-**Escenario:** oficina diáfana con 4 escritorios, una sala de reuniones y una cafetera.
-**Personajes:** Arquitecto, Programador, Revisor, Tester.
-**Waypoints:** `desk_<rol>` (acción `type` en el sitio), `meeting` (zona central de
-reunión), `coffee` (punto de espera).
-**Coreografía:**
-| Evento | Movimiento |
-|--------|------------|
-| `agent:active(rol)` | el rol camina a su `desk_<rol>`, `act:'type'` (pantalla parpadea) |
-| `agent:waiting(rol)` | el rol camina a `coffee`, `idle` |
-| `handoff(a→b)` | `a` y `b` caminan a `meeting`, breve `act` de conversación; luego `b` a su `desk` |
-| retorno tester→programador (loop_back) | el tester camina de `desk_tester` a `desk_programmer` y vuelve |
-| `mode:locked` | luces apagadas, escritorios vacíos |
+**Disposición (3 zonas):** **izquierda** = sala de reuniones (mesa donde se juntan los 4);
+**centro** = sala de descanso con máquina de café; **derecha** = sala abierta con las 4
+estaciones de trabajo (ordenadores). Personajes que **CAMINAN** entre zonas
+(`locomotion:'walk'`, motor §14.3.6).
+
+**Personajes:** Arquitecto (azul), Programador (coral), Revisor (púrpura), Tester (verde).
+8 direcciones + ciclos de marcha.
+
+**Reparto rol→sitio (confirmado):** diseño/revisión en la **sala de reuniones**;
+código/pruebas en las **estaciones**. Los 4 se juntan en la reunión en **kickoff
+(arquitecto)** y en la **entrega**.
+
+**Coreografía por etapa real (`busy.current` = rol activo):**
+| Etapa | Movimiento |
+|-------|------------|
+| reposo / sin tarea | los 4 caminan/están en el **café** (centro), `talk` (charlando) |
+| `architect` (diseño) | **los 4** caminan a la **reunión** (izq); arquitecto `present`, resto escucha |
+| `programmer` (código) | el programador camina a su **estación** (der), `type`; los demás al café |
+| `reviewer` (revisión) | el revisor camina a la **reunión** (izq), `present`; los demás al café |
+| `tester` (pruebas) | el tester camina a su **estación** (der), `type`; los demás al café |
+| vuelta atrás (tests fallan) | el tester vuelve a su estación / reanuda el programador (re-targeting) |
+| entrega (`data.files`) | **los 4** caminan a la **reunión** a presentar el resultado |
+| `mode:locked` | escena en reposo (café) |
+
+**Acciones de personaje:** `walk` (8 dir), `type` (en la estación), `talk` (café/charla),
+`present` (en la reunión). Anclaje por los pies; z-index por `y` (los de delante tapan).
+
+**Motor verificado (F-S0):** la coreografía mueve a los devs entre zonas según las etapas
+reales (kickoff → reunión; código/pruebas → estación; resto → café), probado con
+placeholders antes de generar arte.
 
 ### 14.6.3 Second Brain — la biblioteca *(esbozo; se detalla al replicar)*
 

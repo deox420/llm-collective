@@ -36,6 +36,15 @@ function councilAsset(name) { return pick(councilFiles, name) }
 function devteamAsset(name) { return pick(devteamFiles, name) }
 function brainAsset(name) { return pick(brainFiles, name) }
 
+const DIRS8 = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW']
+// Tiras de animación de un dev: caminar por dirección + acciones (teclear, charlar).
+// Nombres: <slug>.walk-<dir>.png, <slug>.type.png, <slug>.talk.png (minúsculas dir).
+function dtAnim(slug) {
+  const walk = {}
+  for (const d of DIRS8) walk[d] = devteamAsset(`${slug}.walk-${d.toLowerCase()}.png`)
+  return { walk, type: devteamAsset(`${slug}.type.png`), talk: devteamAsset(`${slug}.talk.png`) }
+}
+
 // ---- Council v2: mesa redonda, movimiento mínimo sentado (SDD §14.6.1) -----
 // Contrato SceneTheme v2: cada agente tiene asiento + orientación fijos; choreography
 // deriva la ACCIÓN de cada uno del estado REAL (sit_idle/writing/stand_present/vote/
@@ -124,23 +133,38 @@ const council = {
   },
 }
 
-// ---- Dev Team: la oficina (4 roles) ---------------------------------------
+// ---- Dev Team v2: la oficina, personajes que CAMINAN (SDD §14.6.2) ---------
+// Tres zonas: sala de reuniones (izquierda), descanso+café (centro), estaciones
+// (derecha). El motor (locomotion:'walk') interpola la posición y elige el ciclo
+// de marcha por dirección; al llegar, la ACCIÓN (type/talk/present). Coreografía:
+//  - reposo: los 4 en el café, charlando.
+//  - architect (diseño) y entrega: los 4 a la reunión (se juntan).
+//  - programmer/tester (código/pruebas): el activo a su estación (teclea); resto al café.
+//  - reviewer (revisión): el revisor a la reunión; resto al café.
+const DT = {
+  meeting: { architect: { x: 13, y: 46 }, programmer: { x: 25, y: 46 }, reviewer: { x: 13, y: 64 }, tester: { x: 25, y: 64 } },
+  break:   { architect: { x: 44, y: 48 }, programmer: { x: 56, y: 48 }, reviewer: { x: 44, y: 64 }, tester: { x: 56, y: 64 } },
+  desk:    { architect: { x: 74, y: 38 }, programmer: { x: 88, y: 38 }, reviewer: { x: 74, y: 66 }, tester: { x: 88, y: 66 } },
+}
+const DT_DESK_ROLE = { programmer: true, tester: true }  // trabajan en su estación; arquitecto/revisor en reuniones
+const DT_IDS = ['architect', 'programmer', 'reviewer', 'tester']
 const devteam = {
   id: 'devteam-office',
   mode: 'devteam',
   label: 'La oficina',
-  centerLabel: 'Reunión',
+  locomotion: 'walk',
   assets: {
-    sprites: {
-      architect: devteamAsset('architect.png'),
-      programmer: devteamAsset('programmer.png'),
-      reviewer: devteamAsset('reviewer.png'),
-      tester: devteamAsset('tester.png'),
-    },
     background: devteamAsset('background.png'),
-    decor: [
-      { id: 'coffee', src: devteamAsset('coffee.png'), x: 90, y: 84, w: 10 },
-    ],
+    sprites: {
+      architect: devteamAsset('architect.png'), programmer: devteamAsset('programmer.png'),
+      reviewer: devteamAsset('reviewer.png'), tester: devteamAsset('tester.png'),
+    },
+    // anim[id] = { walk: {S,E,N,W,…}, type, talk } (tiras). Si faltan → placeholder.
+    anim: {
+      architect: dtAnim('architect'), programmer: dtAnim('programmer'),
+      reviewer: dtAnim('reviewer'), tester: dtAnim('tester'),
+    },
+    animFrames: 6,
   },
   agents: [
     { id: 'architect', kind: 'dev', name: 'Arquitecto', tint: '#3b82c4' },
@@ -148,19 +172,24 @@ const devteam = {
     { id: 'reviewer', kind: 'dev', name: 'Revisor', tint: '#8156d6' },
     { id: 'tester', kind: 'dev', name: 'Tester', tint: '#3f9a6a' },
   ],
-  layout() {
-    return {
-      architect: { x: 22, y: 32 },
-      programmer: { x: 50, y: 32 },
-      reviewer: { x: 78, y: 32 },
-      tester: { x: 50, y: 72 },
+  // Destino + acción de cada agente según la etapa REAL (rol activo = busy.current).
+  choreography({ stage, working, data }) {
+    const delivered = !!(data && (data.final || (data.files && data.files.length)))
+    const gather = stage === 'architect' || delivered  // los 4 a la reunión
+    const out = {}
+    for (const id of DT_IDS) {
+      let at, act, face
+      if (gather) {
+        at = DT.meeting[id]; act = (id === 'architect' || (delivered && id === 'reviewer')) ? 'present' : 'idle'; face = 'S'
+      } else if (working && stage === id) {
+        if (DT_DESK_ROLE[id]) { at = DT.desk[id]; act = 'type'; face = 'N' }
+        else { at = DT.meeting[id]; act = 'present'; face = 'S' }   // revisor en reuniones
+      } else {
+        at = DT.break[id]; act = 'talk'; face = 'S'                 // sin tarea → café, charlando
+      }
+      out[id] = { at, act, face }
     }
-  },
-  poseFor(agentId, { busy }) {
-    if (!busy) return POSE.IDLE
-    if (busy.current === agentId) return POSE.ACTIVE
-    if (busy.done?.includes(agentId)) return POSE.DONE
-    return POSE.WAIT
+    return out
   },
   detailFor(agentId, data) {
     const map = {

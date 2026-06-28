@@ -1,5 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { SCENE_THEMES } from './scenes.js'
+
+const DIRS = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE']
+function dir8(dx, dy) {
+  const a = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360  // 0=E, 90=S(abajo), 270=N
+  return DIRS[Math.round(a / 45) % 8]
+}
+
+// Motor de marcha (SDD §14.3.6): interpola la posición de cada agente hacia su
+// destino (choreography) a velocidad constante, eligiendo el rumbo (8 dir) mientras
+// camina; al llegar adopta su acción. prefers-reduced-motion → sin tween (salta).
+function useChoreography(theme, ctx) {
+  const ctxRef = useRef(ctx); ctxRef.current = ctx
+  const st = useRef(null)
+  const [, tick] = useReducer((x) => (x + 1) % 1e9, 0)
+  if (st.current == null) {
+    st.current = {}
+    const init = theme.choreography(ctx)
+    for (const a of theme.agents) {
+      const t = init[a.id] || { at: { x: 50, y: 50 }, face: 'S', act: 'idle' }
+      st.current[a.id] = { x: t.at.x, y: t.at.y, dir: t.face || 'S', motion: t.act || 'idle' }
+    }
+  }
+  useEffect(() => {
+    let raf, last = null
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const SPEED = 34  // % de lienzo por segundo
+    const loop = (ts) => {
+      if (last == null) last = ts
+      const dt = Math.min((ts - last) / 1000, 0.05); last = ts
+      const tg = theme.choreography(ctxRef.current)
+      let dirty = false
+      for (const a of theme.agents) {
+        const s = st.current[a.id], t = tg[a.id]; if (!t) continue
+        const dx = t.at.x - s.x, dy = t.at.y - s.y, dist = Math.hypot(dx, dy)
+        if (dist > 0.8 && !reduce) {
+          const mv = Math.min(dist, SPEED * dt)
+          s.x += dx / dist * mv; s.y += dy / dist * mv
+          s.dir = dir8(dx, dy); s.motion = 'walk'; dirty = true
+        } else {
+          if (s.x !== t.at.x || s.y !== t.at.y) { s.x = t.at.x; s.y = t.at.y; dirty = true }
+          const nm = t.act || 'idle', nf = t.face || s.dir
+          if (s.motion !== nm) { s.motion = nm; dirty = true }
+          if (s.dir !== nf) { s.dir = nf; dirty = true }
+        }
+      }
+      if (dirty) tick()
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [theme])
+  return st.current
+}
 
 // Vista interactiva. Refleja el estado REAL del pipeline (regla de oro §13.2).
 //
@@ -23,6 +76,7 @@ export default function InteractiveScene({ mode, busy, data }) {
   const detail = selected ? theme.detailFor(selected, data) : null
   const background = theme.assets?.background || null
   const isV2 = typeof theme.choreography === 'function'
+  const walks = theme.locomotion === 'walk'
 
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative', zIndex: 1 }}>
@@ -40,7 +94,9 @@ export default function InteractiveScene({ mode, busy, data }) {
             style={background ? { backgroundImage: `url(${background})`, backgroundSize: '100% 100%' } : undefined}
           >
             {isV2
-              ? <SceneV2 theme={theme} ctx={{ stage, working, data }} onSelect={setSelected} />
+              ? (walks
+                  ? <SceneV2Walk theme={theme} ctx={{ stage, working, data }} onSelect={setSelected} />
+                  : <SceneV2 theme={theme} ctx={{ stage, working, data }} onSelect={setSelected} />)
               : <SceneV1 theme={theme} ctx={{ stage, busy: here, data }} onSelect={setSelected} />}
           </div>
 
@@ -97,6 +153,46 @@ function SceneV2({ theme, ctx, onSelect }) {
             key={a.id}
             className={`iscene-actor act-${m.act} face-${m.face} kind-${a.kind}`}
             style={{ left: `${m.at.x}%`, top: `${m.at.y}%`, '--tint': a.tint, zIndex: Math.round(m.at.y) }}
+            onClick={() => onSelect(a.id)}
+            title={`${a.name} — clic para ver detalle`}
+          >
+            {strip
+              ? <span className="iscene-actor-anim" style={{ backgroundImage: `url(${strip})` }} aria-hidden />
+              : sprite
+                ? <img className="iscene-actor-sprite" src={sprite} alt={a.name} aria-hidden />
+                : <span className="iscene-fig2" aria-hidden />}
+            <span className="iscene-name">{a.name}</span>
+          </button>
+        )
+      })}
+    </>
+  )
+}
+
+// --- v2 con marcha (Dev Team): los agentes CAMINAN entre zonas. El motor
+// (useChoreography) da posición/rumbo/acción; aquí se pinta el ciclo de marcha por
+// dirección o la acción al llegar. Sin sprites → placeholder que igualmente se mueve.
+function SceneV2Walk({ theme, ctx, onSelect }) {
+  const states = useChoreography(theme, ctx)
+  const A = theme.assets || {}
+  const sprites = A.sprites || {}
+  const anim = A.anim || {}
+  const decor = (A.decor || []).filter((d) => d.src)
+  return (
+    <>
+      {decor.map((d) => (
+        <img key={d.id} className="iscene-decor" src={d.src} alt="" aria-hidden
+          style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%` }} />
+      ))}
+      {theme.agents.map((a) => {
+        const s = states[a.id] || { x: 50, y: 50, dir: 'S', motion: 'idle' }
+        const strip = s.motion === 'walk' ? anim[a.id]?.walk?.[s.dir] : anim[a.id]?.[s.motion]
+        const sprite = sprites[a.id]
+        return (
+          <button
+            key={a.id}
+            className={`iscene-actor motion-${s.motion} kind-${a.kind}`}
+            style={{ left: `${s.x}%`, top: `${s.y}%`, '--tint': a.tint, zIndex: Math.round(s.y) }}
             onClick={() => onSelect(a.id)}
             title={`${a.name} — clic para ver detalle`}
           >
