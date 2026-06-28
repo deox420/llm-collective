@@ -26,29 +26,32 @@ PROFILES: dict[str, dict] = {
     # Para empezar a construir y usar el proyecto SIN GPU física ni alquilada.
     # Solo necesitas tu suscripción de Ollama Cloud (Pro = 3 concurrentes).
     "cloud_only": {
+        # Nombres del catálogo VIVO de Ollama Cloud (verificado 2026-06-28 contra
+        # /api/tags). El council usa 3 familias distintas para diversidad de opinión.
         "council_models": [
-            "cloud/qwen3:32b",
-            "cloud/deepseek-r1:32b",
-            "cloud/llama3.3:70b",
+            "cloud/deepseek-v3.2",
+            "cloud/glm-5",
+            "cloud/gpt-oss:120b",
         ],
-        "chairman_model": "cloud/llama3.3:70b",
+        "chairman_model": "cloud/deepseek-v4-pro",
         "devteam_roles": {
-            "architect":  "cloud/qwen3:32b",
-            "programmer": "cloud/qwen3-coder:32b",
-            "reviewer":   "cloud/deepseek-r1:32b",
-            "tester":     "cloud/qwen3-coder:32b",
+            "architect":  "cloud/glm-5",
+            "programmer": "cloud/qwen3-coder-next",
+            "reviewer":   "cloud/deepseek-v3.2",
+            "tester":     "cloud/qwen3-coder-next",
         },
-        # Embeddings del Second Brain. En cloud_only van por cloud; cuando tengas
-        # Ollama local, cambia a local/nomic-embed-text (gratis y más privado).
-        "embeddings_model": "cloud/nomic-embed-text",
+        # OJO: el catálogo de Ollama Cloud NO expone un modelo de embeddings. El
+        # Second Brain necesita Ollama LOCAL para embeddings: usa el perfil
+        # local_dev o apunta esto a local/nomic-embed-text con OLLAMA_LOCAL_HOST.
+        "embeddings_model": "local/nomic-embed-text",
         # Fallback configurable (NFR-6): si un modelo cloud falla o no existe,
-        # call_model reintenta con el modelo de aquí. Todos dentro de cloud porque
-        # es el único destino de este perfil.
+        # call_model reintenta con el modelo de aquí.
         "fallbacks": {
-            "cloud/qwen3:32b":       "cloud/llama3.3:70b",
-            "cloud/deepseek-r1:32b": "cloud/llama3.3:70b",
-            "cloud/llama3.3:70b":    "cloud/qwen3:32b",
-            "cloud/qwen3-coder:32b": "cloud/qwen3:32b",
+            "cloud/deepseek-v3.2":     "cloud/glm-5",
+            "cloud/glm-5":             "cloud/deepseek-v3.2",
+            "cloud/gpt-oss:120b":      "cloud/glm-5",
+            "cloud/deepseek-v4-pro":   "cloud/deepseek-v3.2",
+            "cloud/qwen3-coder-next":  "cloud/deepseek-v3.2",
         },
     },
 

@@ -24,7 +24,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho. Los IDs entre paréntesis (FR-…, NFR-
 - [x] Implementar el **gestor de concurrencia global**: un único modo activo a la vez; los demás bloqueados (FR de concurrencia, `12-frontend.md`). _(Diverge de SDD §12.4; registrado en ADR-0008.)_
 - [x] Implementar el **emisor de eventos SSE de etapas** reutilizable por los tres modos (contrato en `13-interactive-scenes.md` §13.2 y `specs/api-spec.md`).
 - [x] Modelo de configuración (qué modelo va a cada rol) leído de `shared/model_config.py` vía `MODEL_PROFILE`, no hardcodeado. Las apps importan `COUNCIL_MODELS`, `CHAIRMAN_MODEL`, `DEVTEAM_ROLES`, `EMBEDDINGS_MODEL` de ahí.
-- [ ] **(Bloqueado)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. Clave ya configurada, pero **la política de egress de este entorno remoto bloquea `ollama.com` (403)**. Ejecutar en local o añadir `ollama.com` al allowlist del entorno.
+- [x] **(RESUELTO 2026-06-28)** Verificar que los modelos del perfil `cloud_only` existen en la cuenta de Ollama Cloud (`uv run python -m shared.verify_models`) y ajustar `model_config.py` si no. El egress a `ollama.com` **ya está abierto** y la clave vive en las variables de entorno del entorno cloud. Los nombres antiguos (`qwen3:32b`, `deepseek-r1:32b`, `llama3.3:70b`…) **ya no existían** en el catálogo 2026; `model_config.py` actualizado a nombres del catálogo vivo (`deepseek-v3.2`, `glm-5`, `gpt-oss:120b`, `deepseek-v4-pro`, `qwen3-coder-next`), los 5 verificados OK en la cuenta.
 
 **DoD:** tests del router pasan; un test demuestra que iniciar un segundo modo mientras otro corre devuelve "bloqueado"; los eventos SSE se emiten en orden de etapa.
 
@@ -301,9 +301,23 @@ PixelLab esté disponible (Claude Desktop/local).
   (`docs/specs/traceability.md`). 72 tests verdes.
 
 ### Qué falta (no es código)
-1. Ejecutar `uv run python -m shared.verify_models` y una corrida real de cada modo en un
-   entorno con egress a `ollama.com` (o añadirlo al allowlist).
-2. Generar e integrar los sprites de PixelLab (STANDBY) — ver `ASSETS.md`.
+1. ~~Corridas reales~~ — **HECHO (2026-06-28)** para Council y Dev Team (ver bitácora).
+   Egress a `ollama.com` abierto + clave en variables de entorno. Perfil refrescado.
+2. **Second Brain real** pendiente: Ollama Cloud **no expone `/api/embeddings`** (404),
+   así que los embeddings exigen **Ollama LOCAL** (`OLLAMA_LOCAL_HOST` + `nomic-embed-text`)
+   o el perfil `local_dev`. La lógica RAG (chunking, Chroma, recuperación, citas) está
+   probada con embeddings *faked*; solo falta el modelo de embeddings real.
+3. Generar e integrar los sprites de PixelLab (STANDBY) — ver `ASSETS.md`. La clave de
+   PixelLab también está en las variables de entorno por si se retoma.
+
+### Bitácora de verificación real (2026-06-28)
+- **Council** ✅ end-to-end real: pregunta → 3 opiniones en paralelo (deepseek-v3.2,
+  glm-5, gpt-oss:120b) → revisión cruzada anónima → síntesis de `deepseek-v4-pro`.
+  Etapas emitidas en orden por SSE.
+- **Dev Team** ✅ end-to-end real: architect → programmer (tool_calls reales escribiendo
+  ficheros) → reviewer → tester (**pytest REAL en sandbox**, verde en iter 1).
+- **Second Brain** ⛔ bloqueado por embeddings (cloud sin `/api/embeddings`). Necesita
+  Ollama local. `model_config` ya apunta `embeddings_model` a `local/nomic-embed-text`.
 
 ### Cómo arrancar el proyecto
 ```bash
