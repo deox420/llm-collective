@@ -183,12 +183,24 @@ function SceneV2Walk({ theme, ctx, onSelect }) {
   const sprites = A.sprites || {}
   const anim = A.anim || {}
   const decor = (A.decor || []).filter((d) => d.src)
+  const propImg = A.props || {}
+  const props = theme.propsFor ? theme.propsFor(ctx) : []
   return (
     <>
       {decor.map((d) => (
         <img key={d.id} className="iscene-decor" src={d.src} alt="" aria-hidden
-          style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%` }} />
+          style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%`, zIndex: Math.round(d.y) }} />
       ))}
+      {/* objetos dinámicos (p. ej. libro por nota recuperada): sprite real si está,
+          si no placeholder CSS. z-index por su y para mezclarse con el personaje. */}
+      {props.map((p) => {
+        const z = p.z != null ? p.z : Math.round(p.y)
+        return propImg[p.kind]
+          ? <img key={p.id} className={`iscene-propimg ${p.kind}`} src={propImg[p.kind]} alt="" aria-hidden
+              style={{ left: `${p.x}%`, top: `${p.y}%`, zIndex: z }} />
+          : <span key={p.id} className={`iscene-prop ${p.kind}`} aria-hidden
+              style={{ left: `${p.x}%`, top: `${p.y}%`, zIndex: z }} />
+      })}
       {theme.agents.map((a) => {
         const s = states[a.id] || { x: 50, y: 50, dir: 'S', motion: 'idle' }
         const strip = s.motion === 'walk'

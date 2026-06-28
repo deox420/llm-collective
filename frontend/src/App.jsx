@@ -120,12 +120,18 @@ export default function App() {
 
   const startDemo = useCallback(async (m) => {
     if (busyRef.current) { showToast(busyRef.current.mode); return }
+    if (m === 'brain') setBrain({ answer: '', retrieved: [], citations: [], error: null })
     setBusy({ mode: m, stages: STAGES_BY_MODE[m], done: [], current: null })
     try {
       await runMode(m, {
         onEvent: ({ event, data }) => {
           if (event === 'stage:start') setBusy((b) => b && { ...b, current: data.stage })
           else if (event === 'stage:done') setBusy((b) => b && { ...b, done: [...b.done, data.stage], current: null })
+          // La demo de Second Brain emite el contrato real (retrieved/answer/
+          // citations) para que la escena muestre libros, lectura y entrega.
+          else if (event === 'retrieved') setBrain((s) => ({ ...(s || {}), retrieved: data.notes || [] }))
+          else if (event === 'answer') setBrain((s) => ({ ...(s || {}), answer: data.content }))
+          else if (event === 'citations') setBrain((s) => ({ ...(s || {}), citations: data.notes || [] }))
         },
       })
       setHistories((h) => ({ ...h, [m]: [{ id: `${m}-${h[m].length + 1}`, title: composer.trim().slice(0, 42) || `Consulta #${h[m].length + 1}` }, ...h[m]] }))

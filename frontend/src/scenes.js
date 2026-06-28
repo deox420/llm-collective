@@ -44,6 +44,20 @@ function dtAnim(slug) {
   return { walk, type: devteamAsset(`${slug}.type.png`), talk: devteamAsset(`${slug}.talk.png`) }
 }
 
+// Tiras del bibliotecario: caminar (4 cardinales) + acciones (buscar, leer, entregar).
+// Nombres: librarian.walk-{s,e,n,w}.png, librarian.search.png, librarian.read.png,
+// librarian.deliver.png. Si falta un PNG → placeholder con el mismo contrato.
+function brainAnim() {
+  const walk = {}
+  for (const d of ['S', 'E', 'N', 'W']) walk[d] = brainAsset(`librarian.walk-${d.toLowerCase()}.png`)
+  return {
+    walk,
+    search: brainAsset('librarian.search.png'),
+    read: brainAsset('librarian.read.png'),
+    deliver: brainAsset('librarian.deliver.png'),
+  }
+}
+
 // ---- Council v2: mesa redonda, movimiento mínimo sentado (SDD §14.6.1) -----
 // Contrato SceneTheme v2: cada agente tiene asiento + orientación fijos; choreography
 // deriva la ACCIÓN de cada uno del estado REAL (sit_idle/writing/stand_present/vote/
@@ -202,35 +216,85 @@ const devteam = {
   },
 }
 
-// ---- Second Brain: la biblioteca (un bibliotecario) -----------------------
+// ---- Second Brain v2: la biblioteca, el bibliotecario CAMINA (SDD §14.6.3) --
+// Zonas abiertas (composite: suelo vacío + muebles como objetos): ESTANTERÍAS al
+// fondo, MESA DE LECTURA al centro, MOSTRADOR al frente. El bibliotecario CAMINA
+// entre ellas según la etapa REAL (locomotion:'walk', motor §14.3.6):
+//   reposo / sin consulta → en el mostrador, tranquilo (idle).
+//   retrieval → va a las ESTANTERÍAS y busca (search, mira al fondo); por cada
+//               nota recuperada aparece un libro (propsFor).
+//   synthesis → va a la MESA DE LECTURA y lee (read, mira al frente).
+//   done (answer listo) → vuelve al MOSTRADOR y entrega (deliver) + citas.
+// Waypoints = posición de los PIES (sprite anclado abajo); z-index por y (los
+// muebles, decor z0, quedan siempre detrás del personaje, que se planta ANTE ellos).
+const BRAIN_WP = {
+  counter: { x: 50, y: 82 },  // tras el mostrador de circulación (reposo/entrega), mira al frente (S)
+  shelves: { x: 34, y: 38 },  // ante las estanterías EMPOTRADAS del muro del fondo, mira al fondo (N)
+  reading: { x: 50, y: 67 },  // ante la mesa de lectura, mira al frente (S)
+}
 const brain = {
   id: 'brain-library',
   mode: 'brain',
   label: 'La biblioteca',
-  centerLabel: 'Mostrador',
+  locomotion: 'walk',
   assets: {
-    sprites: { librarian: brainAsset('librarian.png') },
     background: brainAsset('background.png'),
+    sprites: { librarian: brainAsset('librarian.png') },
+    // anim.librarian = { walk:{S,E,N,W}, search, read, deliver } (tiras 6×). Si
+    // faltan los PNG → placeholder que igualmente camina/actúa.
+    anim: { librarian: brainAnim() },
+    animFrames: 6,
+    // props dinámicos (libro por nota recuperada); InteractiveScene los pinta.
+    props: { book: brainAsset('book.png') },
+    // mobiliario fijo (composite): estanterías al fondo, mesa al centro, mostrador
+    // al frente, lámpara y planta de ambiente. x/y = CENTRO del objeto, w = % ancho.
+    // Mobiliario grand-classic. Estanterías EMPOTRADAS en el muro del fondo (parte del
+    // fondo). En el SUELO, todo CENITAL (visto desde arriba) para casar con el suelo:
+    // mesa de lectura (centro) y mostrador de circulación (frente) vistos en planta, y
+    // como ambiente piezas planas propias de biblioteca (globo, pila de libros/rollos)
+    // que se leen bien desde arriba. z por y.
     decor: [
-      { id: 'books', src: brainAsset('books.png'), x: 28, y: 72, w: 12 },
-      { id: 'candle', src: brainAsset('candle.png'), x: 72, y: 34, w: 7 },
+      { id: 'table', src: brainAsset('reading-table.png'), x: 50, y: 55, w: 20 },
+      { id: 'counter', src: brainAsset('counter.png'), x: 50, y: 85, w: 28 },
+      { id: 'globe', src: brainAsset('globe.png'), x: 13, y: 62, w: 8 },
+      { id: 'pile', src: brainAsset('pile.png'), x: 84, y: 68, w: 9 },
     ],
   },
   agents: [
     { id: 'librarian', kind: 'librarian', name: 'Bibliotecario', tint: '#8156d6' },
   ],
-  layout() {
-    return { librarian: { x: 50, y: 50 } }
+  // Destino + acción del bibliotecario según la etapa REAL (regla de oro §13.2).
+  choreography({ stage, working, data }) {
+    const answered = !!(data && data.answer)
+    let at = BRAIN_WP.counter, act = 'idle', face = 'S'
+    if (working && stage === 'retrieval') { at = BRAIN_WP.shelves; act = 'search'; face = 'N' }
+    else if (working && stage === 'synthesis') { at = BRAIN_WP.reading; act = 'read'; face = 'S' }
+    else if (answered) { at = BRAIN_WP.counter; act = 'deliver'; face = 'S' }
+    return { librarian: { at, face, act } }
   },
-  poseFor(agentId, { stage, busy, data }) {
-    if (!busy && !data?.answer) return POSE.IDLE
-    if (stage === 'retrieval') return POSE.ACTIVE
-    if (stage === 'synthesis') return POSE.TALK
-    return data?.answer ? POSE.DONE : POSE.IDLE
+  // Un libro por nota recuperada; siguen al bibliotecario por su flujo de trabajo
+  // (estantería → mesa → mostrador). Tope 6 (= TOP_K) para no saturar la escena.
+  propsFor({ stage, working, data }) {
+    const notes = (data && (data.retrieved || data.notes)) || []
+    const answered = !!(data && data.answer)
+    let base = null
+    if (working && stage === 'retrieval') base = { x: 44, y: 42, dx: 3.6, row: 3 } // apilados junto al bibliotecario, ante el muro de estanterías
+    else if (working && stage === 'synthesis') base = { x: 31, y: 61, dx: 3.6, row: 3 } // junto a la mesa de lectura
+    else if (answered) base = { x: 36, y: 79, dx: 4, row: 6, z: 95 } // sobre el mostrador (citas entregadas, delante)
+    if (!base) return []
+    const n = Math.min(notes.length, 6)
+    const props = []
+    for (let i = 0; i < n; i++) {
+      props.push({ id: `book-${i}`, kind: 'book', x: base.x + (i % base.row) * base.dx, y: base.y + Math.floor(i / base.row) * 4, z: base.z })
+    }
+    return props
   },
   detailFor(_agentId, data) {
-    const notes = (data?.retrieved || []).map((n) => `• ${n.note_path}`).join('\n')
-    return { title: 'Bibliotecario', body: (data?.answer || 'Buscando…') + (notes ? `\n\nNotas:\n${notes}` : '') }
+    const list = data?.retrieved || data?.citations || []
+    const notes = list.map((n) => `• ${n.note_path || n.path || n}`).join('\n')
+    const answer = data?.answer
+      || (data && (data.retrieved || data.notes)?.length ? 'Buscando en las notas…' : 'En reposo. Lanza una consulta para que el bibliotecario busque en el vault.')
+    return { title: 'Bibliotecario', body: answer + (notes ? `\n\nNotas:\n${notes}` : '') }
   },
 }
 

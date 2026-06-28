@@ -58,6 +58,24 @@ DEMO_STAGES: dict[str, list[str]] = {
 # ETA: el frontend muestra ETAPAS, nunca tiempo restante.
 _DEMO_STAGE_SECONDS = 0.8
 
+# Notas/respuesta de ejemplo para la DEMO de Second Brain (sin modelos): permiten
+# que la escena interactiva muestre los libros por nota (retrieval), la lectura
+# (synthesis) y la entrega con citas (done) sin necesidad de un vault indexado ni
+# de Ollama. Mismo CONTRATO de eventos que la consulta real (retrieved/answer/
+# citations); el frontend los pliega igual.
+_BRAIN_DEMO_NOTES = [
+    {"note_path": "proyectos/segundo-cerebro.md", "score": 0.91},
+    {"note_path": "reuniones/q2-planificacion.md", "score": 0.87},
+    {"note_path": "ideas/arquitectura-rag.md", "score": 0.83},
+    {"note_path": "notas/obsidian-sync.md", "score": 0.79},
+    {"note_path": "lecturas/embeddings-locales.md", "score": 0.74},
+]
+_BRAIN_DEMO_ANSWER = (
+    "Según tus notas, el Second Brain indexa el vault de Obsidian con embeddings "
+    "locales (nomic-embed-text) y responde citando las notas fuente. El acceso "
+    "remoto es solo por túnel, nunca por puerto abierto."
+)
+
 
 def _health_payload() -> dict:
     return {
@@ -93,6 +111,33 @@ def _error(code: str, message: str, **extra) -> dict:
     return {"error": {"code": code, "message": message, **extra}}
 
 
+async def _brain_demo(emitter: StageEmitter) -> None:
+    """Demo de Second Brain SIN modelos (FR-S3/S4): emite el MISMO contrato que la
+    consulta real (retrieved → answer → citations) + etapas, con pausas para que la
+    escena interactiva muestre al bibliotecario caminando estanterías → mesa →
+    mostrador. El frontend pliega estos eventos en el estado `brain` igual que una
+    consulta real; aquí no hay modelos ni vault."""
+    # retrieval: el bibliotecario va a las estanterías; un libro por nota recuperada.
+    await emitter.stage_start("retrieval")
+    found: list[dict] = []
+    for note in _BRAIN_DEMO_NOTES:
+        await asyncio.sleep(0.5)
+        found.append(note)
+        await emitter.emit("retrieved", {"notes": list(found)})
+    await asyncio.sleep(0.6)
+    await emitter.stage_done("retrieval")
+    # synthesis: va a la mesa de lectura y lee; al terminar, respuesta + citas.
+    await emitter.stage_start("synthesis")
+    await asyncio.sleep(2.2)
+    await emitter.emit("answer", {"content": _BRAIN_DEMO_ANSWER})
+    await emitter.emit("citations", {"notes": _BRAIN_DEMO_NOTES[:3]})
+    await asyncio.sleep(0.8)
+    await emitter.stage_done("synthesis")
+    # done: vuelve al mostrador a entregar la respuesta + citas.
+    await asyncio.sleep(0.4)
+    await emitter.session_done({"mode": "brain"})
+
+
 @app.post("/api/demo/{mode}/run")
 async def demo_run(mode: str):
     """Demo del shell: ejerce lock global + StageEmitter emitiendo etapas por SSE.
@@ -121,11 +166,14 @@ async def demo_run(mode: str):
 
     async def producer() -> None:
         try:
-            for stage in stages:
-                await emitter.stage_start(stage)
-                await asyncio.sleep(_DEMO_STAGE_SECONDS)
-                await emitter.stage_done(stage)
-            await emitter.session_done({"mode": mode})
+            if mode == "brain":
+                await _brain_demo(emitter)
+            else:
+                for stage in stages:
+                    await emitter.stage_start(stage)
+                    await asyncio.sleep(_DEMO_STAGE_SECONDS)
+                    await emitter.stage_done(stage)
+                await emitter.session_done({"mode": mode})
         finally:
             # Liberar el modo SIEMPRE, aunque el cliente se desconecte.
             await manager.release(mode)

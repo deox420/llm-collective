@@ -259,6 +259,15 @@ button { font-family: inherit; }
 .iscene-propimg.scroll_blank { width: 22px; }
 .iscene-propimg.scroll_verdict { width: 30px; }
 
+/* Second Brain: libro por nota recuperada (sprite real o placeholder). Pequeño,
+   a escala del bibliotecario; aparece con pop. z-index lo fija InteractiveScene. */
+.iscene-propimg.book { width: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.iscene-prop.book {
+  width: 13px; height: 10px; border-radius: 2px;
+  background: linear-gradient(#8156d6 0 33%, #c98a3c 33% 66%, #6f9a5a 66% 100%);
+  border: 1px solid rgba(0,0,0,.45); box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+
 /* ── Accesibilidad: sin animación si el usuario lo pide (NFR-INT-1) ────── */
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

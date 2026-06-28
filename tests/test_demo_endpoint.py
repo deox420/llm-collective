@@ -50,11 +50,17 @@ async def test_demo_stream_emits_stages_in_order_and_releases(client):
             if line.startswith("event:"):
                 events.append(line[len("event:"):].strip())
 
-    # brain: retrieval -> synthesis, terminando en session:done.
-    assert events == [
+    # brain: esqueleto de etapas (retrieval -> synthesis -> session:done). La demo
+    # de Second Brain intercala además el contrato de datos real (retrieved/answer/
+    # citations) para que la escena interactiva y la vista chat muestren contenido.
+    stage_skeleton = [e for e in events if e in ("stage:start", "stage:done", "session:done")]
+    assert stage_skeleton == [
         "stage:start", "stage:done",   # retrieval
         "stage:start", "stage:done",   # synthesis
         "session:done",
     ]
+    assert "retrieved" in events   # un evento por lote de notas recuperadas
+    assert "answer" in events
+    assert "citations" in events
     # El lock debe quedar liberado tras completar el stream.
     assert not manager.is_busy()
