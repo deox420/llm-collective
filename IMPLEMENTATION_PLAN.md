@@ -240,6 +240,20 @@ Usa esta sección como bitácora: fecha, fase, qué quedó hecho, qué bloqueó.
     endpoint index+query end-to-end. Verificación visual con Playwright (vault
     sintético; sync.md recuperado y citado). Embeddings/chairman faked por egress.
 
+- **2026-06-28 · Escenas v2 — Dev Team (oficina) COMPLETA con marcha real.**
+  - Motor de locomoción (`useChoreography`, rAF): interpola posición hacia el destino,
+    elige rumbo (8→4 dir) al caminar y adopta la acción al llegar; `prefers-reduced-motion`
+    salta sin tween. `SceneV2Walk` pinta marcha por dirección o acción.
+  - 3 zonas (reuniones izq · café centro · estaciones der). Coreografía confirmada por el
+    usuario: reposo→café charlando; kickoff(architect)/entrega→los 4 a la reunión;
+    programmer/tester→su estación (type); reviewer→reunión; resto al café.
+  - Assets PixelLab v2 (cuenta del usuario): fondo de oficina (360×240) + 4 devs 80px
+    8-dir con walk(S/E/N/W)+type+talk, procesados a 100×120 bottom-anchored y
+    **commiteados**. (El tester base se quedó colgado por carga y se regeneró.)
+  - Verificado con Playwright: en reposo charlan en el café; al kickoff los 4 caminan a
+    la reunión; el tester/programador van a teclear a su estación. Build verde.
+    `MANIFEST.md`+`fetch.sh` v2. Pendiente: replicar en Second Brain.
+
 - **2026-06-26 · Escenas v2 — SDD dedicado (rehacer con movimiento real).**
   - A petición del usuario, las escenas se rehacen "bien hechas". Elecciones:
     **movimiento real** (los personajes caminan entre posiciones según la etapa),

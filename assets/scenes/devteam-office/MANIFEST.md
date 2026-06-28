@@ -1,30 +1,40 @@
-# Dev Team — assets pixel-art (PixelLab) · la oficina
+# Dev Team v2 — assets pixel-art (PixelLab) · la oficina
 
-Generados con el MCP de PixelLab el **2026-06-26** (cuenta del usuario, Tier 1).
-Paleta del modo: coral/amber. Personajes 48px `low top-down`.
+Generados con el MCP de PixelLab el **2026-06-28**. Diseño en `docs/14-scenes-sdd.md §14.6.2`.
+Personajes 80px (canvas 112), `low top-down`, 8 direcciones; **caminan** entre 3 zonas
+(reuniones izq · café centro · estaciones der). Un solo estilo, a escala.
 
-> Igual que Council: los `.png` no están aquí porque el entorno de generación bloquea
-> por egress los hosts de descarga de PixelLab (403). Bájalos con `fetch.sh` desde una
-> máquina con salida a PixelLab. El frontend ya está cableado (`scenes.js`/`InteractiveScene.jsx`).
+> Los `.png` **están commiteados** en esta carpeta (procesados a lienzo uniforme 100×120
+> bottom-anchored; tiras de marcha 6×100px). Este manifiesto es para regenerarlos. La
+> descarga usa los endpoints del MCP (`api.pixellab.ai`, con `PIXELLAB_API_KEY`) — la
+> ruta `backblaze` directa puede estar bloqueada por egress.
 
-## Personajes (frame frontal `south`, URL pública)
+## Personajes (8 dir + walk S/E/N/W + type + talk)
 
-| Fichero | character_id |
-|---------|--------------|
-| `architect.png`  | `64f48626-75fd-43ad-9683-f9c27a22478a` |
-| `programmer.png` | `0860e96b-10e8-43b5-9372-052c65098bd3` |
-| `reviewer.png`   | `4e0556aa-e619-48e7-b3ad-94a5ef7d0572` |
-| `tester.png`     | `67a2aa81-9298-45f3-a782-cb81aa061634` |
+| slug | character_id |
+|------|--------------|
+| `architect` | `49b7028d-92a3-42fd-9a65-fb74a6b2ae42` |
+| `programmer` | `499f274d-ee6b-41c0-90c8-221cae2619b8` |
+| `reviewer` | `304d2a4b-1e9f-4b48-a48d-2b4621a68776` |
+| `tester` | `dc2898ba-fc0e-4e26-815d-216afed782a0` |
 
-`https://backblaze.pixellab.ai/file/pixellab-characters/98e80c31-e06c-45b8-bbd0-0b02ba97d261/<id>/rotations/south.png`
+Ficheros por dev: `<slug>.png` (sur), `<slug>.walk-{s,e,n,w}.png` (tira 6 frames),
+`<slug>.type.png`, `<slug>.talk.png`.
 
-## Objetos de mapa (EFÍMEROS ~8 h; con `PIXELLAB_API_KEY`)
+## Fondo
 
-| Fichero | object_id | Uso |
-|---------|-----------|-----|
-| `background.png` | `75242b5c-2b9c-4d25-98ac-b440fa31a132` | oficina diáfana (escritorios, sala de reuniones) — fondo |
-| `coffee.png` | `a63cb357-544e-437b-9d25-67cc52e26807` | máquina de café (esquina) |
+| Fichero | object_id |
+|---------|-----------|
+| `background.png` (oficina: reuniones izq · sofá/café centro · escritorios der) | `fe5c0cdf-fa54-432f-86c3-9933cc47f1bc` (efímero ~8 h) |
 
-Regenerar (`create_map_object`) si expiran:
-- **background.png** — `modern open plan office floor, rows of desks with computers, glass meeting room, gray carpet, symmetrical…` · 360×240 · `high top-down`, lineless
-- **coffee.png** — `office coffee machine…` · 56×80 · `high top-down`
+Regenerar fondo (`create_map_object`, 360×240, `high top-down`, lineless):
+`top-down view of a modern office floor divided in three zones: LEFT a meeting room with
+a long table and chairs, CENTER a break area with a coffee machine and a small sofa, RIGHT
+an open workspace with a row of desks with computers, grey carpet and wooden floor, walls,
+symmetrical, retro pixel art, limited palette`
+
+## Procesado
+Cada personaje: descargar zip del MCP, recortar a la ventana común (estático + walk 4 dir
++ type + talk), escalar y pegar BOTTOM-ANCHORED en 100×120; ensamblar tiras 6×100px. El
+frontend (`scenes.js`/`InteractiveScene.jsx`) los detecta vía glob; ajusta posiciones en
+`DT` (waypoints) si cambias el fondo.

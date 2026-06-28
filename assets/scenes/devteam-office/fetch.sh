@@ -1,36 +1,25 @@
 #!/usr/bin/env bash
-# fetch.sh — descarga los assets pixel-art de Dev Team (la oficina) desde PixelLab.
-# Ejecútalo desde una máquina con salida a *.pixellab.ai. Ver MANIFEST.md. Idempotente.
+# fetch.sh — descarga los assets RAW de Dev Team v2 (zips de personaje + fondo) desde
+# PixelLab para reprocesarlos. Los .png ya procesados están commiteados; esto es para
+# regenerar. Requiere PIXELLAB_API_KEY. Ver MANIFEST.md. El ensamblado a lienzo uniforme
+# 100x120 (bottom-anchored) + tiras lo hace el helper de procesado (no incluido aquí).
 set -euo pipefail
 cd "$(dirname "$0")"
-
-CDN="https://backblaze.pixellab.ai/file/pixellab-characters/98e80c31-e06c-45b8-bbd0-0b02ba97d261"
 MCP="https://api.pixellab.ai/mcp"
+[ -n "${PIXELLAB_API_KEY:-}" ] || { echo "Define PIXELLAB_API_KEY"; exit 1; }
 
-# Personajes: frame frontal (south). URL pública, sin auth.
 declare -A CHARS=(
-  [architect.png]=64f48626-75fd-43ad-9683-f9c27a22478a
-  [programmer.png]=0860e96b-10e8-43b5-9372-052c65098bd3
-  [reviewer.png]=4e0556aa-e619-48e7-b3ad-94a5ef7d0572
-  [tester.png]=67a2aa81-9298-45f3-a782-cb81aa061634
+  [architect]=49b7028d-92a3-42fd-9a65-fb74a6b2ae42
+  [programmer]=499f274d-ee6b-41c0-90c8-221cae2619b8
+  [reviewer]=304d2a4b-1e9f-4b48-a48d-2b4621a68776
+  [tester]=dc2898ba-fc0e-4e26-815d-216afed782a0
 )
-for out in "${!CHARS[@]}"; do
-  echo "↓ $out"
-  curl -fSL -o "$out" "$CDN/${CHARS[$out]}/rotations/south.png"
+mkdir -p raw
+for slug in "${!CHARS[@]}"; do
+  echo "↓ $slug.zip (rotaciones + animaciones)"
+  curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" -o "raw/$slug.zip" "$MCP/characters/${CHARS[$slug]}/download"
 done
-
-# Objetos de mapa: efímeros (~8 h). Requieren la API key. Regenera si expiran (MANIFEST.md).
-if [ -n "${PIXELLAB_API_KEY:-}" ]; then
-  for pair in \
-    "background.png:75242b5c-2b9c-4d25-98ac-b440fa31a132" \
-    "coffee.png:a63cb357-544e-437b-9d25-67cc52e26807"; do
-    out="${pair%%:*}"; id="${pair##*:}"
-    echo "↓ $out (efímero)"
-    curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" \
-      -o "$out" "$MCP/map-objects/$id/download" || echo "  (expirado: regenera, ver MANIFEST.md)"
-  done
-else
-  echo "PIXELLAB_API_KEY no definida: omito background.png/coffee.png (regenéralos con el MCP)."
-fi
-
-echo "Listo. El frontend detecta los .png automáticamente (scenes.js)."
+echo "↓ background.png (efímero ~8 h)"
+curl -fSL -H "Authorization: Bearer $PIXELLAB_API_KEY" -o background.png "$MCP/map-objects/fe5c0cdf-fa54-432f-86c3-9933cc47f1bc/download" \
+  || echo "  (fondo expirado: regenera con create_map_object, ver MANIFEST.md)"
+echo "Listo. Reprocesa los zips a 100x120 bottom-anchored + tiras (ver MANIFEST.md §Procesado)."
